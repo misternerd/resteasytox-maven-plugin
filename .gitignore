@@ -1,0 +1,14 @@
+target/*
+target 
+*/target/ 
+.metadata 
+tar.gz 
+.classpath 
+.project 
+*/.settings/
+*classpath
+*settings
+/bin
+*target/*
+*/.project
+dependency-reduced-pom.xml
