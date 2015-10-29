@@ -14,7 +14,10 @@ import com.misternerd.resteasytox.RestServiceLayout;
 import com.misternerd.resteasytox.base.MethodParameter;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
-import com.misternerd.resteasytox.javascript.objects.FromJsonMethod;
+import com.misternerd.resteasytox.base.ServiceMethod.RequestMethod;
+import com.misternerd.resteasytox.javascript.helper.RestClient;
+import com.misternerd.resteasytox.javascript.objects.InitFromJsonMethod;
+import com.misternerd.resteasytox.javascript.objects.InitMembersMethod;
 import com.misternerd.resteasytox.javascript.objects.JavascriptClass;
 import com.misternerd.resteasytox.javascript.objects.JavascriptMethod;
 import com.misternerd.resteasytox.javascript.objects.JavascriptParameter;
@@ -38,10 +41,17 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			Files.createDirectories(outputPath);
 		}
 
+		generateHelperObjects();
 		generateRequestObjects();
 		generateResponseObjects();
 		generateDtos();
 		generateServiceClasses();
+	}
+
+
+	private void generateHelperObjects() throws IOException
+	{
+		new RestClient(outputPath, layout).writeToFile();
 	}
 
 
@@ -54,7 +64,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 			writePublicClassConstants(cls, jsClass);
 			jsClass.addMemberInitMethod();
-			jsClass.addMethod(new FromJsonMethod(fields, layout));
+			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
 			writePrivateAndProtectedFields(jsClass, fields);
 			writePublicGettersAndSetters(jsClass, fields);
 			jsClass.addMethod(new ToJsonMethod(fields, layout));
@@ -73,7 +83,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 			writePublicClassConstants(cls, jsClass);
 			jsClass.addMemberInitMethod();
-			jsClass.addMethod(new FromJsonMethod(fields, layout));
+			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
 			writePrivateAndProtectedFields(jsClass, fields);
 			writePublicGettersAndSetters(jsClass, fields);
 			jsClass.addMethod(new ToJsonMethod(fields, layout));
@@ -83,18 +93,51 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	}
 
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void generateDtos() throws Exception
 	{
 		for (Class<?> cls : layout.getDtoClasses())
 		{
 			JavascriptClass jsClass = new JavascriptClass(getOutputPathFromJavaPackage(cls), cls.getSimpleName());
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, true);
+			List<Field> enumConstants = getEnumConstants(cls);
 
-			writePrivateAndProtectedFields(jsClass, fields);
-			jsClass.addMemberInitMethod();
-			jsClass.addMethod(new FromJsonMethod(fields, layout));
-			writePublicGettersAndSetters(jsClass, fields);
-			jsClass.addMethod(new ToJsonMethod(fields, layout));
+			if(!enumConstants.isEmpty())
+			{
+				Class<? extends Enum> enumClass = (Class<? extends Enum>) cls;
+
+				for(Field field : enumConstants)
+				{
+					jsClass.addPublicConstant(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
+				}
+
+				jsClass.addMember("value");
+				jsClass.addMethod(new InitMembersMethod(jsClass));
+				jsClass.addMethod("initFromJson")
+					.addParameter(new JavascriptParameter("jsonData"))
+					.addBody("value = jsonData;")
+					.addBody("return self;");
+				jsClass.addGetter("value");
+				jsClass.addSetter("value");
+				jsClass.addMethod("toJson")
+					.addParameter(new JavascriptParameter("dontEncode"))
+					.addBody("if(dontEncode)")
+					.addBody("{")
+						.addBody("\treturn value;")
+					.addBody("}")
+					.addBody("else")
+					.addBody("{")
+						.addBody("\treturn JSON.stringify(value);")
+					.addBody("}");
+			}
+			else
+			{
+				writePrivateAndProtectedFields(jsClass, fields);
+				jsClass.addMemberInitMethod();
+				jsClass.addMethod(new InitFromJsonMethod(fields, layout));
+				writePublicGettersAndSetters(jsClass, fields);
+				jsClass.addMethod(new ToJsonMethod(fields, layout));
+			}
 
 			jsClass.writeToFile();
 		}
@@ -120,7 +163,8 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 	private void writeServiceHeader(JavascriptClass jsClass, String name, String path)
 	{
-		jsClass.addConstant("PATH", path);
+		jsClass.addPrivateConstant("PATH", path);
+		jsClass.addConstructorParam(new JavascriptParameter("restClient"));
 	}
 
 
@@ -131,11 +175,29 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		if(!serviceMethod.headerParams.isEmpty())
 		{
 			method.addBody("var headerParams = {};");
+
+			for(MethodParameter param : serviceMethod.headerParams)
+			{
+				method.addBody("headerParams['%s'] = %s;", param.name, convertParamNameToCorrectFormat(param));
+			}
+		}
+		else
+		{
+			method.addBody("var headerParams = null;");
 		}
 
 		if(!serviceMethod.pathParams.isEmpty())
 		{
-			method.addBody("var pathParams = {}");
+			method.addBody("var pathParams = {};");
+
+			for(MethodParameter param : serviceMethod.pathParams)
+			{
+				method.addBody("pathParams['%s'] = %s;", param.name, convertParamNameToCorrectFormat(param));
+			}
+		}
+		else
+		{
+			method.addBody("var pathParams = null;");
 		}
 
 		if(serviceMethod.bodyParam != null)
@@ -157,7 +219,20 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			method.addParameter(new JavascriptParameter(convertParamNameToCorrectFormat(param)));
 		}
 
-
+		if(RequestMethod.POST.equals(serviceMethod.httpMethod))
+		{
+			method.addBody("var request = restClient.postRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
+					serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType,
+					(serviceMethod.returnType != null) ? "new " + serviceMethod.returnType.getSimpleName() + "()" : null);
+			method.addBody("return request;");
+		}
+		else
+		{
+			method.addBody("var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, '%s', '%s', %s);",
+					serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType,
+					(serviceMethod.returnType != null) ? "new " + serviceMethod.returnType.getSimpleName() + "()" : null);
+			method.addBody("return request;");
+		}
 
 	}
 
@@ -183,7 +258,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 			for (Field field : constants)
 			{
-				jsClass.addConstant(field.getName(), field.getInt(null));
+				jsClass.addPublicConstant(field.getName(), field.getInt(null));
 			}
 		}
 
@@ -191,7 +266,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 		for (Field field : constants)
 		{
-			jsClass.addConstant(field.getName(), field.getInt(null));
+			jsClass.addPublicConstant(field.getName(), field.getInt(null));
 		}
 	}
 

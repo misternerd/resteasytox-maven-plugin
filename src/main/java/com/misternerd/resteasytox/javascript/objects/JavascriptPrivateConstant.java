@@ -1,20 +1,20 @@
 package com.misternerd.resteasytox.javascript.objects;
 
-public class JavascriptConstant extends AbstractJavascriptObject
+public class JavascriptPrivateConstant extends AbstractJavascriptObject
 {
 	private final String name;
 
 	private final String value;
 
 
-	protected JavascriptConstant(String name, String value)
+	protected JavascriptPrivateConstant(String name, String value)
 	{
 		this.name = name;
 		this.value = "'" + value + "'";
 	}
 
 
-	protected JavascriptConstant(String name, int value)
+	protected JavascriptPrivateConstant(String name, int value)
 	{
 		this.name = name;
 		this.value = Integer.toString(value);

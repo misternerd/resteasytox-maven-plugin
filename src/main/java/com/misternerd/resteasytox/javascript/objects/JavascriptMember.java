@@ -15,10 +15,15 @@ public class JavascriptMember extends AbstractJavascriptObject
 	}
 
 
-	protected JavascriptMember(String name, String value)
+	protected JavascriptMember(String name, String value, boolean escapeContent)
 	{
 		this.name = name;
-		this.value = (value != null) ? "'" + value + "'" : null;
+
+		if(value != null && escapeContent)
+		{
+			value = "'" + value + "'";
+		}
+		this.value = value;
 	}
 
 
@@ -29,6 +34,7 @@ public class JavascriptMember extends AbstractJavascriptObject
 	}
 
 
+	@Override
 	public void build(StringBuilder sb, int indentSize)
 	{
 		String indent = getIndent(indentSize);

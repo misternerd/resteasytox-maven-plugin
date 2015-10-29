@@ -1,6 +1,5 @@
 package com.misternerd.resteasytox.javascript.objects;
 
-import com.misternerd.resteasytox.php.baseObjects.PhpParameter;
 
 public class JavascriptParameter
 {
@@ -28,14 +27,14 @@ public class JavascriptParameter
 			return true;
 		}
 
-		if (obj == null || !(obj instanceof PhpParameter))
+		if (obj == null || !(obj instanceof JavascriptParameter))
 		{
 			return false;
 		}
 
-		PhpParameter other = (PhpParameter) obj;
+		JavascriptParameter other = (JavascriptParameter) obj;
 
-		return ((name != null && name.equals(other.originalName)) || (name == null && other.originalName == null));
+		return ((name != null && name.equals(other.name)) || (name == null && other.name == null));
 	}
 
 

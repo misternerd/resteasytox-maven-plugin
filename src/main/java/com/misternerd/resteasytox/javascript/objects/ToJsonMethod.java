@@ -11,9 +11,10 @@ public class ToJsonMethod extends JavascriptMethod
 	public ToJsonMethod(List<Field> members, RestServiceLayout layout)
 	{
 		super("toJson");
+		addParameter(new JavascriptParameter("dontEncode"));
 		addBody("var result = {};");
 		addLine();
- 
+
 		for (Field member : members)
 		{
 			String memberName = member.getName();
@@ -29,14 +30,21 @@ public class ToJsonMethod extends JavascriptMethod
 			}
 		}
 
-		addLine();
-		addBody("return JSON.stringify(result);");
+		addLine()
+		.addBody("if(dontEncode)")
+		.addBody("{")
+			.addBody("\nreturn result;")
+		.addBody("}")
+		.addBody("else")
+		.addBody("{")
+		.addBody("\treturn JSON.stringify(result);")
+		.addBody("}");
 	}
 
 
 	private void writeDtoBody(String memberName)
 	{
-		addBody(String.format("result['%s'] = %s.toJson();", memberName, memberName));
+		addBody(String.format("result['%s'] = %s.toJson(true);", memberName, memberName));
 	}
 
 

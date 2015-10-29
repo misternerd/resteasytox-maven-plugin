@@ -22,6 +22,8 @@ public class InitMembersMethod extends JavascriptMethod
 			addBody("%s = _%s;", member.name, member.name);
 		}
 
+		addBody("return self;");
+
 		super.build(sb, indentCount);
 	}
 

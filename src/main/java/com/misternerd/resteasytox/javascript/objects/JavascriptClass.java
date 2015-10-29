@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,13 +15,19 @@ public class JavascriptClass
 
 	private final Path outputFile;
 
-	private final String name;
+	public final String name;
 
-	private final Set<JavascriptConstant> constants = new LinkedHashSet<>();
+	private final Set<JavascriptParameter> constructorParams = new LinkedHashSet<>();
+
+	private final Set<JavascriptPrivateConstant> privateConstants = new LinkedHashSet<>();
+
+	private final Set<JavascriptPublicConstant> publicConstants = new LinkedHashSet<>();
 
 	private final Set<JavascriptMember> members = new LinkedHashSet<>();
 
-	private final List<JavascriptMethod> methods = new ArrayList<>();
+	private final List<JavascriptFunction> privateMethods = new ArrayList<>();
+
+	private final List<JavascriptMethod> publicMethods = new ArrayList<>();
 
 
 	public JavascriptClass(Path outputPath, String name)
@@ -30,19 +37,41 @@ public class JavascriptClass
 	}
 
 
-	public JavascriptConstant addConstant(String name, String value)
+	public void addConstructorParam(JavascriptParameter param)
 	{
-		JavascriptConstant result = new JavascriptConstant(name, value);
-		constants.add(result);
-		return result;
+		constructorParams.add(param);
 	}
 
 
-	public JavascriptConstant addConstant(String name, int value)
+	public JavascriptClass addPrivateConstant(String name, String value)
 	{
-		JavascriptConstant result = new JavascriptConstant(name, value);
-		constants.add(result);
-		return result;
+		JavascriptPrivateConstant result = new JavascriptPrivateConstant(name, value);
+		privateConstants.add(result);
+		return this;
+	}
+
+
+	public JavascriptClass addPrivateConstant(String name, int value)
+	{
+		JavascriptPrivateConstant result = new JavascriptPrivateConstant(name, value);
+		privateConstants.add(result);
+		return this;
+	}
+
+
+	public JavascriptClass addPublicConstant(String name, String value)
+	{
+		JavascriptPublicConstant result = new JavascriptPublicConstant(name, value);
+		publicConstants.add(result);
+		return this;
+	}
+
+
+	public JavascriptClass addPublicConstant(String name, int value)
+	{
+		JavascriptPublicConstant result = new JavascriptPublicConstant(name, value);
+		publicConstants.add(result);
+		return this;
 	}
 
 
@@ -60,9 +89,9 @@ public class JavascriptClass
 	}
 
 
-	public JavascriptMember addMember(String name, String value)
+	public JavascriptMember addMember(String name, String value, boolean escapeContent)
 	{
-		JavascriptMember member = new JavascriptMember(name, value);
+		JavascriptMember member = new JavascriptMember(name, value, escapeContent);
 		members.add(member);
 		return member;
 	}
@@ -76,25 +105,33 @@ public class JavascriptClass
 	}
 
 
+	public JavascriptFunction addPrivateMethod(String name)
+	{
+		JavascriptFunction function = new JavascriptFunction(name);
+		privateMethods.add(function);
+		return function;
+	}
+
+
 	public JavascriptMethod addMethod(String name)
 	{
 		JavascriptMethod method = new JavascriptMethod(name);
-		methods.add(method);
+		publicMethods.add(method);
 		return method;
 	}
-	
-	
+
+
 	public void addGetter(String memberName)
 	{
 		JavascriptMember member = getMemberByName(memberName);
-		methods.add(new JavascriptGetter(member));
+		publicMethods.add(new JavascriptGetter(member));
 	}
-	
-	
+
+
 	public void addSetter(String memberName)
 	{
 		JavascriptMember member = getMemberByName(memberName);
-		methods.add(new JavascriptSetter(member));
+		publicMethods.add(new JavascriptSetter(member));
 	}
 
 
@@ -114,13 +151,13 @@ public class JavascriptClass
 
 	public void addMemberInitMethod()
 	{
-		methods.add(new InitMembersMethod(this));
+		publicMethods.add(new InitMembersMethod(this));
 	}
 
 
 	public void addMethod(JavascriptMethod method)
 	{
-		methods.add(method);
+		publicMethods.add(method);
 	}
 
 
@@ -129,12 +166,13 @@ public class JavascriptClass
 		StringBuilder sb = new StringBuilder();
 
 		buildFileHeader(sb);
-		buildConstants(sb);
+		buildPrivateConstants(sb);
 		buildClassHeader(sb);
 		buildMembers(sb);
-		buildMethods(sb);
-		
+		buildPrivateMethods(sb);
+		buildPublicMethods(sb);
 		buildClassFooter(sb);
+		buildPublicConstants(sb);
 		buildFileFooter(sb);
 http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 		return sb.toString();
@@ -143,15 +181,13 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 
 	private void buildFileHeader(StringBuilder sb)
 	{
-		sb.append("var ").append(name).append(" = (function()")
-			.append("\n{");
-		
+		sb.append("var ").append(name).append(" = (function()\n{");
 	}
 
 
-	private void buildConstants(StringBuilder sb)
+	private void buildPrivateConstants(StringBuilder sb)
 	{
-		for(JavascriptConstant constant : constants)
+		for(JavascriptPrivateConstant constant : privateConstants)
 		{
 			constant.build(sb, 1);
 		}
@@ -160,8 +196,21 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 
 	private void buildClassHeader(StringBuilder sb)
 	{
-		sb.append("\n\n\tvar cls = function()")
-			.append("\n\t{")
+		sb.append("\n\n\tvar cls = function(");
+		Iterator<JavascriptParameter> it = constructorParams.iterator();
+
+		for(int i = 0, j = constructorParams.size(); i < j; i++)
+		{
+			JavascriptParameter constructorParam = it.next();
+			sb.append(constructorParam.name);
+
+			if(i < j - 1)
+			{
+				sb.append(", ");
+			}
+		}
+
+		sb.append(")\n\t{")
 			.append("\n\t\tvar self = this;");
 	}
 
@@ -175,28 +224,44 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	}
 
 
-	private void buildMethods(StringBuilder sb)
+	private void buildPrivateMethods(StringBuilder sb)
 	{
-		for(JavascriptMethod method : methods)
+		for(JavascriptFunction method : privateMethods)
 		{
 			method.build(sb, 2);
 		}
-		
-	}
-	
-	
-	private void buildClassFooter(StringBuilder sb)
-	{
-		sb.append("\n\t};\n\n\treturn cls;");
 	}
 
+
+	private void buildPublicMethods(StringBuilder sb)
+	{
+		for(JavascriptMethod method : publicMethods)
+		{
+			method.build(sb, 2);
+		}
+	}
+
+
+	private void buildClassFooter(StringBuilder sb)
+	{
+		sb.append("\n\t};");
+	}
+
+
+	private void buildPublicConstants(StringBuilder sb)
+	{
+		for(JavascriptPublicConstant constant : publicConstants)
+		{
+			constant.build(sb, 1);
+		}
+	}
 
 	private void buildFileFooter(StringBuilder sb)
 	{
-		sb.append("\n})();");
+		sb.append("\n\n\treturn cls;\n})();");
 	}
-	
-	
+
+
 	public void writeToFile() throws IOException
 	{
 		String content = build();

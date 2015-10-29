@@ -6,20 +6,18 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import com.misternerd.resteasytox.RestServiceLayout;
 
 
-public class FromJsonMethod extends JavascriptMethod
+public class InitFromJsonMethod extends JavascriptMethod
 {
 
 	private final RestServiceLayout layout;
 
-	
-	public FromJsonMethod(List<Field> members, RestServiceLayout layout)
+
+	public InitFromJsonMethod(List<Field> members, RestServiceLayout layout)
 	{
-		super("fromJson");
+		super("initFromJson");
 		this.layout = layout;
 		createJsonDecoder();
 
@@ -31,7 +29,7 @@ public class FromJsonMethod extends JavascriptMethod
 			addLine();
 			addBody("if(jsonData['%s'])", memberName);
 			addBody("{");
-			
+
 			boolean bodyComplete = false;
 
 			if (!bodyComplete && layout.getDtoClasses().contains(cls))
@@ -51,6 +49,8 @@ public class FromJsonMethod extends JavascriptMethod
 
 			addBody("}");
 		}
+
+		addBody("return self;");
 	}
 
 
@@ -59,7 +59,7 @@ public class FromJsonMethod extends JavascriptMethod
 		addParameter(new JavascriptParameter("jsonData"));
 		addBody("if(typeof jsonData == 'string')");
 		addBody("{");
-		addBody("\tjsonData = JSON.parse(jsonData);\n");
+		addBody("\tjsonData = JSON.parse(jsonData);");
 		addBody("}");
 	}
 
@@ -68,9 +68,10 @@ public class FromJsonMethod extends JavascriptMethod
 	{
 		String className = member.getType().getSimpleName();
 		addBody("\t%s = new %s();", memberName, className);
-		addBody("\t%s.fromJson(jsonData['%s']);", memberName, memberName);
+		addBody("\t%s.initFromJson(jsonData['%s']);", memberName, memberName);
 		return true;
 	}
+
 
 	private boolean createParameterizedAssignment(Field member, String memberName, Class<?> cls)
 	{
@@ -80,7 +81,7 @@ public class FromJsonMethod extends JavascriptMethod
 		if (List.class.isAssignableFrom(cls) && types.length == 1)
 		{
 			Class<?> concreteClass = (Class<?>) types[0];
-			
+
 			if(layout.getDtoClasses().contains(concreteClass))
 			{
 				createListAssignment(memberName, concreteClass);
@@ -88,9 +89,10 @@ public class FromJsonMethod extends JavascriptMethod
 			}
 		}
 
-		if (Map.class.isAssignableFrom(cls))
+		if (Map.class.isAssignableFrom(cls) && types.length == 2)
 		{
-			throw new NotImplementedException("Need to implement maps to hashes");
+			createMapAssignment(memberName, (Class<?>) types[0], (Class<?>) types[1]);
+			return true;
 		}
 
 		return false;
@@ -104,7 +106,29 @@ public class FromJsonMethod extends JavascriptMethod
 		addBody("\tfor(var index in jsonData['%s'])", memberName);
 		addBody("\t{");
 		addBody("\t\t%s[index] = new %s();", memberName, concreteClass.getSimpleName());
-		addBody("\t\t%s[index].fromJson(jsonData['%s']);", memberName, memberName);
+		addBody("\t\t%s[index].initFromJson(jsonData['%s']);", memberName, memberName);
+		addBody("\t}");
+	}
+
+
+	private void createMapAssignment(String memberName, Class<?> keyClass, Class<?> valueClass)
+	{
+		addBody("\t%s = {};", memberName);
+		addLine();
+		addBody("\tfor(var index in jsonData['%s'])", memberName);
+		addBody("\t{");
+
+		if(layout.getDtoClasses().contains(valueClass))
+		{
+			addBody("\t\tvar value = new %s();", valueClass.getSimpleName());
+			addBody("\t\tvalue.initFromJson(jsonData['%s'][index]);");
+		}
+		else
+		{
+			addBody("\t\tvar value = jsonData['%s'][index];", memberName);
+		}
+
+		addBody("\t\t%s[index] = value;", memberName);
 		addBody("\t}");
 	}
 
