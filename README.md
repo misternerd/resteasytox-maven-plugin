@@ -24,39 +24,39 @@ Usage
 * The plugin is currently in no repository yet, so you need to checkout this GIT and build the plugin with `mvn clean install`
 	(installing it to your local `.m2` directory)
 * Include the plugin in your JAX-RS compatible webapp as a build plugin. In the `pom.xml`, add something like this:
-
-	<build>
-		...
-		<plugins>
-			<plugin>
-            	<groupId>com.misternerd</groupId>
-				<artifactId>resteasytox-maven-plugin</artifactId>
-				<version>1-SNAPSHOT</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>convert</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<javaPackageName>org.example.package.of.your.rest.project</javaPackageName>
-					<printLayout>true</printLayout>
-					<serviceClassnames>
-						<class>org.example.package.of.your.rest.project.SomeServiceClassWithPathAnnotation1</class>
-						<class>org.example.package.of.your.rest.project.SomeServiceClassWithPathAnnotation2</class>
-					</serviceClassnames>
-					<convertToPhp>true</convertToPhp>
-					<phpOutputPath>/tmp/phpOutput</phpOutputPath>
-					<phpBaseNamespace>lessons2go\rest</phpBaseNamespace>
-					<convertToJavascript>true</convertToJavascript>
-					<javascriptOutputPath>/tmp/javascriptOutput</javascriptOutputPath>
-				</configuration>
-            </plugin>
-		</plugins>
-	</build>
-	
+```xml
+<build>
+	...
+	<plugins>
+		<plugin>
+    	<groupId>com.misternerd</groupId>
+			<artifactId>resteasytox-maven-plugin</artifactId>
+			<version>1-SNAPSHOT</version>
+			<executions>
+				<execution>
+					<phase>package</phase>
+					<goals>
+						<goal>convert</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<javaPackageName>org.example.package.of.your.rest.project</javaPackageName>
+				<printLayout>true</printLayout>
+				<serviceClassnames>
+					<class>org.example.package.of.your.rest.project.SomeServiceClassWithPathAnnotation1</class>
+					<class>org.example.package.of.your.rest.project.SomeServiceClassWithPathAnnotation2</class>
+				</serviceClassnames>
+				<convertToPhp>true</convertToPhp>
+				<phpOutputPath>/tmp/phpOutput</phpOutputPath>
+				<phpBaseNamespace>lessons2go\rest</phpBaseNamespace>
+				<convertToJavascript>true</convertToJavascript>
+				<javascriptOutputPath>/tmp/javascriptOutput</javascriptOutputPath>
+			</configuration>
+    </plugin>
+	</plugins>
+</build>
+```	
 * You need to specify the target languages (e.g. `convertToPhp`, `convertToJavascript`) including an output path. Also, currently you will have to provided ALL your service classes names. These are the classes that you annotate with `@Path`. I hope to work around this requirement in the future.
 
 
