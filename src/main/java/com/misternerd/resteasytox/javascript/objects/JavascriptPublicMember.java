@@ -7,15 +7,18 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 
 	public final String value;
 
+	public final boolean noInitialization;
+
 
 	protected JavascriptPublicMember(String name)
 	{
 		this.name = name;
 		this.value = null;
+		this.noInitialization = false;
 	}
 
 
-	protected JavascriptPublicMember(String name, String value, boolean escapeContent)
+	public JavascriptPublicMember(String name, String value, boolean escapeContent, boolean noInitialization)
 	{
 		this.name = name;
 
@@ -24,6 +27,7 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 			value = "'" + value + "'";
 		}
 		this.value = value;
+		this.noInitialization = noInitialization;
 	}
 
 
@@ -31,6 +35,7 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 	{
 		this.name = name;
 		this.value = Integer.toString(value);
+		this.noInitialization = false;
 	}
 
 
