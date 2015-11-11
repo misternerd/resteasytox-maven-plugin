@@ -53,7 +53,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	@Override
 	public void convert() throws Exception
-	{
+	{	
 		generateBaseObjects();
 		generateHelperObjects();
 		generateRequestObjects();
