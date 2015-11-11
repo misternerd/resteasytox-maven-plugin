@@ -1,13 +1,19 @@
 package com.misternerd.resteasytox.swift;
 
+import java.lang.reflect.Field;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import com.misternerd.resteasytox.AbstractResteasyConverter;
 import com.misternerd.resteasytox.RestServiceLayout;
+import com.misternerd.resteasytox.swift.objects.SwiftClass;
+import com.misternerd.resteasytox.swift.objects.SwiftEnum;
+import com.misternerd.resteasytox.swift.objects.SwiftEnumItem;
+import com.misternerd.resteasytox.swift.objects.SwiftFile;
 
 public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 {
@@ -29,19 +35,43 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	}
 
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void generateDtos() throws Exception
 	{
 		for (Class<?> cls : layout.getDtoClasses())
 		{
-			String superClass = null;
-			if (cls.getSuperclass() != null)
+			
+			Path classPath = getOutputPathFromJavaPackage(cls);
+			
+			String name = cls.getSimpleName();
+			
+			List<Field> enumerations = getEnumConstants(cls);
+			
+			SwiftFile swiftFile;
+
+			if (enumerations != null)
 			{
-				superClass = cls.getSuperclass().getSimpleName();
+				swiftFile = new SwiftEnum(classPath, name);
+				
+				Class<? extends Enum> enumClass = (Class<? extends Enum>) cls;
+				for (Field field : enumerations)
+				{
+					SwiftEnumItem enumItem = new SwiftEnumItem(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
+					((SwiftEnum)swiftFile).addEnumItem(enumItem);
+				}
+			}
+			else
+			{
+				String superClass = null;
+				if (cls.getSuperclass() != null)
+				{
+					superClass = cls.getSuperclass().getSimpleName();
+				}
+				
+				swiftFile = new SwiftClass(classPath, name, superClass);
 			}
 
-			SwiftClass swiftClass = new SwiftClass(getOutputPathFromJavaPackage(cls), cls.getSimpleName(), superClass);
-
-			swiftClass.writeToFile();
+			swiftFile.writeToFile();
 		}
 	}
 
