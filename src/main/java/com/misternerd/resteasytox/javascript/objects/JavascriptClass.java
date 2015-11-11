@@ -23,7 +23,9 @@ public class JavascriptClass
 
 	private final Set<JavascriptPublicConstant> publicConstants = new LinkedHashSet<>();
 
-	private final Set<JavascriptMember> members = new LinkedHashSet<>();
+	private final Set<JavascriptPublicMember> publicMembers = new LinkedHashSet<>();
+
+	private final Set<JavascriptPrivateMember> privateMembers = new LinkedHashSet<>();
 
 	private final List<JavascriptFunction> privateMethods = new ArrayList<>();
 
@@ -61,7 +63,7 @@ public class JavascriptClass
 
 	public JavascriptClass addPublicConstant(String name, String value)
 	{
-		JavascriptPublicConstant result = new JavascriptPublicConstant(name, value);
+		JavascriptPublicConstant result = new JavascriptPublicConstant(this, name, value);
 		publicConstants.add(result);
 		return this;
 	}
@@ -69,38 +71,38 @@ public class JavascriptClass
 
 	public JavascriptClass addPublicConstant(String name, int value)
 	{
-		JavascriptPublicConstant result = new JavascriptPublicConstant(name, value);
+		JavascriptPublicConstant result = new JavascriptPublicConstant(this, name, value);
 		publicConstants.add(result);
 		return this;
 	}
 
 
-	public Set<JavascriptMember> getMembers()
+	public JavascriptPublicMember addPublicMember(String name)
 	{
-		return members;
-	}
-
-
-	public JavascriptMember addMember(String name)
-	{
-		JavascriptMember member = new JavascriptMember(name);
-		members.add(member);
+		JavascriptPublicMember member = new JavascriptPublicMember(name);
+		publicMembers.add(member);
 		return member;
 	}
 
 
-	public JavascriptMember addMember(String name, String value, boolean escapeContent)
+	public Set<JavascriptPublicMember> getPublicMembers()
 	{
-		JavascriptMember member = new JavascriptMember(name, value, escapeContent);
-		members.add(member);
+		return publicMembers;
+	}
+
+
+	public JavascriptPrivateMember addPrivateMember(String name)
+	{
+		JavascriptPrivateMember member = new JavascriptPrivateMember(name);
+		privateMembers.add(member);
 		return member;
 	}
 
 
-	public JavascriptMember addMember(String name, int value)
+	public JavascriptPrivateMember addPrivateMember(String name, String value, boolean escapeValue)
 	{
-		JavascriptMember member = new JavascriptMember(name, value);
-		members.add(member);
+		JavascriptPrivateMember member = new JavascriptPrivateMember(name, value, escapeValue);
+		privateMembers.add(member);
 		return member;
 	}
 
@@ -123,21 +125,21 @@ public class JavascriptClass
 
 	public void addGetter(String memberName)
 	{
-		JavascriptMember member = getMemberByName(memberName);
+		JavascriptPrivateMember member = getMemberByName(memberName);
 		publicMethods.add(new JavascriptGetter(member));
 	}
 
 
 	public void addSetter(String memberName)
 	{
-		JavascriptMember member = getMemberByName(memberName);
+		JavascriptPrivateMember member = getMemberByName(memberName);
 		publicMethods.add(new JavascriptSetter(member));
 	}
 
 
-	private JavascriptMember getMemberByName(String memberName)
+	private JavascriptPrivateMember getMemberByName(String memberName)
 	{
-		for(JavascriptMember member : members)
+		for(JavascriptPrivateMember member : privateMembers)
 		{
 			if(member.name.equals(memberName))
 			{
@@ -168,7 +170,8 @@ public class JavascriptClass
 		buildFileHeader(sb);
 		buildPrivateConstants(sb);
 		buildClassHeader(sb);
-		buildMembers(sb);
+		buildPrivateMembers(sb);
+		buildPublicMembers(sb);
 		buildPrivateMethods(sb);
 		buildPublicMethods(sb);
 		buildClassFooter(sb);
@@ -196,7 +199,7 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 
 	private void buildClassHeader(StringBuilder sb)
 	{
-		sb.append("\n\n\tvar cls = function(");
+		sb.append("\n\n\tvar ").append(name).append(" = function(");
 		Iterator<JavascriptParameter> it = constructorParams.iterator();
 
 		for(int i = 0, j = constructorParams.size(); i < j; i++)
@@ -215,9 +218,18 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	}
 
 
-	private void buildMembers(StringBuilder sb)
+	private void buildPublicMembers(StringBuilder sb)
 	{
-		for(JavascriptMember member : members)
+		for(JavascriptPublicMember member : publicMembers)
+		{
+			member.build(sb, 2);
+		}
+	}
+
+
+	private void buildPrivateMembers(StringBuilder sb)
+	{
+		for(JavascriptPrivateMember member : privateMembers)
 		{
 			member.build(sb, 2);
 		}
@@ -258,7 +270,7 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 
 	private void buildFileFooter(StringBuilder sb)
 	{
-		sb.append("\n\n\treturn cls;\n})();");
+		sb.append("\n\n\treturn ").append(name).append(";\n})();");
 	}
 
 

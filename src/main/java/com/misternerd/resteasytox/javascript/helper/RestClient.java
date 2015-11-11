@@ -25,7 +25,7 @@ public class RestClient extends JavascriptClass
 	{
 		for(ServiceClass serviceClass : layout.getServiceClasses())
 		{
-			addMember(StringUtils.uncapitalize(serviceClass.name), String.format("new %s(this)", serviceClass.name), false);
+			addPrivateMember(StringUtils.uncapitalize(serviceClass.name), String.format("new %s(this)", serviceClass.name), false);
 		}
 
 		addPrivateMethod("replacePathParamsInPath")

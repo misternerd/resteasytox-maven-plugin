@@ -13,7 +13,13 @@ public class JavascriptParameter
 	}
 
 
-	public JavascriptParameter(JavascriptMember member)
+	public JavascriptParameter(JavascriptPrivateMember member)
+	{
+		this.name = "_" + member.name;
+	}
+
+
+	public JavascriptParameter(JavascriptPublicMember member)
 	{
 		this.name = "_" + member.name;
 	}

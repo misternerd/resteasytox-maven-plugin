@@ -1,6 +1,6 @@
 package com.misternerd.resteasytox.javascript.objects;
 
-public class JavascriptMember extends AbstractJavascriptObject
+public class JavascriptPrivateMember extends AbstractJavascriptObject
 {
 
 	public final String name;
@@ -8,14 +8,14 @@ public class JavascriptMember extends AbstractJavascriptObject
 	public final String value;
 
 
-	protected JavascriptMember(String name)
+	protected JavascriptPrivateMember(String name)
 	{
 		this.name = name;
 		this.value = null;
 	}
 
 
-	protected JavascriptMember(String name, String value, boolean escapeContent)
+	protected JavascriptPrivateMember(String name, String value, boolean escapeContent)
 	{
 		this.name = name;
 
@@ -27,7 +27,7 @@ public class JavascriptMember extends AbstractJavascriptObject
 	}
 
 
-	protected JavascriptMember(String name, int value)
+	protected JavascriptPrivateMember(String name, int value)
 	{
 		this.name = name;
 		this.value = Integer.toString(value);

@@ -111,14 +111,14 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 					jsClass.addPublicConstant(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
 				}
 
-				jsClass.addMember("value");
+				jsClass.addPublicMember("value");
 				jsClass.addMethod(new InitMembersMethod(jsClass));
 				jsClass.addMethod("initFromJson")
 					.addParameter(new JavascriptParameter("jsonData"))
 					.addBody("value = jsonData;")
 					.addBody("return self;");
-				jsClass.addGetter("value");
-				jsClass.addSetter("value");
+//				jsClass.addGetter("value");
+//				jsClass.addSetter("value");
 				jsClass.addMethod("toJson")
 					.addParameter(new JavascriptParameter("dontEncode"))
 					.addBody("if(dontEncode)")
@@ -275,7 +275,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	{
 		for (Field field : fields)
 		{
-			jsClass.addMember(field.getName());
+			jsClass.addPublicMember(field.getName());
 		}
 	}
 
@@ -284,9 +284,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	{
 		for (Field field : fields)
 		{
-			String name = field.getName();
-			jsClass.addGetter(name);
-			jsClass.addSetter(name);
+			field.getName();
 		}
 	}
 

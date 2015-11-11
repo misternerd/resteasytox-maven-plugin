@@ -33,24 +33,24 @@ public class ToJsonMethod extends JavascriptMethod
 		addLine()
 		.addBody("if(dontEncode)")
 		.addBody("{")
-			.addBody("\nreturn result;")
+			.addBody("\treturn result;")
 		.addBody("}")
 		.addBody("else")
 		.addBody("{")
-		.addBody("\treturn JSON.stringify(result);")
+			.addBody("\treturn JSON.stringify(result);")
 		.addBody("}");
 	}
 
 
 	private void writeDtoBody(String memberName)
 	{
-		addBody(String.format("result['%s'] = %s.toJson(true);", memberName, memberName));
+		addBody(String.format("result['%s'] = self.%s.toJson(true);", memberName, memberName));
 	}
 
 
 	private void writeDefaultBody(String memberName)
 	{
-		addBody("result['%s'] = %s;", memberName, memberName);
+		addBody("result['%s'] = self.%s;", memberName, memberName);
 	}
 
 }

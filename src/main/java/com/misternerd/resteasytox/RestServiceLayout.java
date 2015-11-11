@@ -5,9 +5,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.logging.Log;
 
+import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.base.MethodParameter;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
@@ -45,6 +48,8 @@ public class RestServiceLayout
 	private final Set<Class<?>> dtoClasses = new HashSet<>();
 
 	private final List<ServiceClass> serviceClasses = new ArrayList<>();
+
+	public final Map<Class<?>, AbstractDto> abstractDtos = new HashMap<>();
 
 
 	public RestServiceLayout(Log log, String javaPackageName, JaxWsAnnotations annotations, List<Class<?>> serviceClassList)
@@ -87,11 +92,11 @@ public class RestServiceLayout
 
 
 	public void readLayoutFromReflection(boolean printLayout)
-			throws NoSuchMethodException, SecurityException, IllegalAccessException, 
+			throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException
 	{
 		readServiceClasses();
-		
+
 		if(printLayout)
 		{
 			printLayout();
@@ -131,7 +136,7 @@ public class RestServiceLayout
 
 				MethodParameter bodyParam = (!bodyParams.isEmpty()) ? bodyParams.iterator().next() : null;
 
-				methods.add(new ServiceMethod(method.getName(), path, requestMethod, requestContentType, 
+				methods.add(new ServiceMethod(method.getName(), path, requestMethod, requestContentType,
 						responseContentType, headerParams, pathParams, bodyParam, returnType));
 			}
 
@@ -271,6 +276,53 @@ public class RestServiceLayout
 			dtoClasses.add(type);
 			extractBaseclassFromType(type);
 			searchDtoTypeInMembers(type);
+
+			if(Modifier.isAbstract(type.getModifiers()))
+			{
+				extractSubclassesForAbstractDto(type);
+			}
+		}
+	}
+
+
+	private void extractSubclassesForAbstractDto(Class<?> abstractClass)
+	{
+		try
+		{
+			logger.debug("Found abstract class: " + abstractClass + ", will search for jackson subtypes");
+
+			Annotation typeInfoAnnotation = abstractClass.getAnnotation(jaxWsAnnotations.jsonTypeInfo);
+			Annotation subtypesAnnotation = abstractClass.getAnnotation(jaxWsAnnotations.jsonSubTypes);
+
+			if(subtypesAnnotation == null || typeInfoAnnotation == null)
+			{
+				logger.warn("Either subtypes or type info are null, will use abstract implementation for class=" + abstractClass);
+				return;
+			}
+
+			Map<String, Class<?>> implementingClasses = new HashMap<>();
+			Method valueMethod = subtypesAnnotation.annotationType().getMethod("value");
+			Object[] result = (Object[]) valueMethod.invoke(subtypesAnnotation);
+
+			for(Object typeAnnotation : result)
+			{
+				valueMethod = typeAnnotation.getClass().getMethod("value");
+				Class<?> subClass = (Class<?>) valueMethod.invoke(typeAnnotation);
+				valueMethod = typeAnnotation.getClass().getMethod("name");
+				String name = (String) valueMethod.invoke(typeAnnotation);
+
+				implementingClasses.put(name, subClass);
+				addDtoTypeIfApplicable(subClass);
+			}
+
+			valueMethod = typeInfoAnnotation.annotationType().getMethod("property");
+			String typeInfo = (String) valueMethod.invoke(typeInfoAnnotation);
+
+			abstractDtos.put(abstractClass, new AbstractDto(abstractClass, implementingClasses, typeInfo));
+		}
+		catch(Throwable tr)
+		{
+			logger.warn("Failed to extract subclasses from abstract class:" + tr);
 		}
 	}
 

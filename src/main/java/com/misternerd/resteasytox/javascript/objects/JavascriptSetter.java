@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 public class JavascriptSetter extends JavascriptMethod
 {
 
-	protected JavascriptSetter(JavascriptMember member)
+	protected JavascriptSetter(JavascriptPrivateMember member)
 	{
 		super("set" + StringUtils.capitalize(member.name));
 		addParameter(new JavascriptParameter("_" + member.name));

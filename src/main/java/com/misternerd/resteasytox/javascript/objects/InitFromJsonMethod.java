@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.misternerd.resteasytox.RestServiceLayout;
+import com.misternerd.resteasytox.base.AbstractDto;
 
 
 public class InitFromJsonMethod extends JavascriptMethod
@@ -27,7 +28,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 			Class<?> cls = member.getType();
 
 			addLine();
-			addBody("if(jsonData['%s'])", memberName);
+			addBody("if('%s' in jsonData)", memberName);
 			addBody("{");
 
 			boolean bodyComplete = false;
@@ -57,6 +58,11 @@ public class InitFromJsonMethod extends JavascriptMethod
 	private void createJsonDecoder()
 	{
 		addParameter(new JavascriptParameter("jsonData"));
+		addBody("if(jsonData == null)");
+		addBody("{");
+			addBody("\treturn null;");
+		addBody("}");
+		addLine();
 		addBody("if(typeof jsonData == 'string')");
 		addBody("{");
 		addBody("\tjsonData = JSON.parse(jsonData);");
@@ -67,8 +73,8 @@ public class InitFromJsonMethod extends JavascriptMethod
 	private boolean createDtoAssignment(Field member, String memberName)
 	{
 		String className = member.getType().getSimpleName();
-		addBody("\t%s = new %s();", memberName, className);
-		addBody("\t%s.initFromJson(jsonData['%s']);", memberName, memberName);
+		addBody("\tself.%s = new %s();", memberName, className);
+		addBody("\tself.%s.initFromJson(jsonData['%s']);", memberName, memberName);
 		return true;
 	}
 
@@ -101,19 +107,47 @@ public class InitFromJsonMethod extends JavascriptMethod
 
 	private void createListAssignment(String memberName, Class<?> concreteClass)
 	{
-		addBody("\t%s = [];", memberName);
-		addLine();
-		addBody("\tfor(var index in jsonData['%s'])", memberName);
-		addBody("\t{");
-		addBody("\t\t%s[index] = new %s();", memberName, concreteClass.getSimpleName());
-		addBody("\t\t%s[index].initFromJson(jsonData['%s']);", memberName, memberName);
-		addBody("\t}");
+		if(layout.abstractDtos.containsKey(concreteClass))
+		{
+			AbstractDto abstractDto = layout.abstractDtos.get(concreteClass);
+
+			addBody("\tself.%s = [];", memberName);
+			addLine();
+			addBody("\tfor(var i in jsonData['%s'])", memberName);
+			addBody("\t{");
+				addBody("\t\tvar classType = jsonData['%s'][i]['%s'];", memberName, abstractDto.typeInfoField);
+				addBody("\t\tswitch(classType)");
+				addBody("\t\t{");
+					for(String typeName : abstractDto.implementingClassesByTypeName.keySet())
+					{
+						String concreteName = abstractDto.implementingClassesByTypeName.get(typeName).getSimpleName();
+						addBody("\t\t\tcase '%s':", typeName);
+						addBody("\t\t\t{");
+							addBody("\t\t\t\tself.%s[i] = new %s();", memberName, concreteName);
+							addBody("\t\t\t\tself.%s[i].initFromJson(jsonData['%s'][i]);", memberName, memberName);
+							addBody("\t\t\t\tself.%s[i].TYPE = '%s';", memberName, concreteName);
+							addBody("\t\t\t\tbreak;");
+						addBody("\t\t\t}");
+					}
+				addBody("\t\t}");
+			addBody("\t}");
+		}
+		else
+		{
+			addBody("\tself.%s = [];", memberName);
+			addLine();
+			addBody("\tfor(var i in jsonData['%s'])", memberName);
+			addBody("\t{");
+			addBody("\t\tself.%s[i] = new %s();", memberName, concreteClass.getSimpleName());
+			addBody("\t\tself.%s[i].initFromJson(jsonData['%s'][i]);", memberName, memberName);
+			addBody("\t}");
+		}
 	}
 
 
 	private void createMapAssignment(String memberName, Class<?> keyClass, Class<?> valueClass)
 	{
-		addBody("\t%s = {};", memberName);
+		addBody("\tself.%s = {};", memberName);
 		addLine();
 		addBody("\tfor(var index in jsonData['%s'])", memberName);
 		addBody("\t{");
@@ -128,13 +162,13 @@ public class InitFromJsonMethod extends JavascriptMethod
 			addBody("\t\tvar value = jsonData['%s'][index];", memberName);
 		}
 
-		addBody("\t\t%s[index] = value;", memberName);
+		addBody("\t\tself.%s[index] = value;", memberName);
 		addBody("\t}");
 	}
 
 	private boolean createDefaultAssignment(String memberName)
 	{
-		addBody("\t%s = jsonData['%s'];", memberName, memberName);
+		addBody("\tself.%s = jsonData['%s'];", memberName, memberName);
 		return true;
 	}
 

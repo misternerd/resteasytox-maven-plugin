@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 public class JavascriptGetter extends JavascriptMethod
 {
 
-	protected JavascriptGetter(JavascriptMember member)
+	protected JavascriptGetter(JavascriptPrivateMember member)
 	{
 		super(member.name);
 

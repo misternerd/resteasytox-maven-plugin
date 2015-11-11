@@ -21,6 +21,10 @@ public class JaxWsAnnotations
 
 	public final Class<? extends Annotation> context;
 
+	public final Class<? extends Annotation> jsonSubTypes;
+
+	public final Class<? extends Annotation> jsonTypeInfo;
+
 
 	@SuppressWarnings("unchecked")
 	public JaxWsAnnotations(ClassLoader classLoader) throws ClassNotFoundException
@@ -33,6 +37,8 @@ public class JaxWsAnnotations
 		this.headerParam = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.HeaderParam");
 		this.pathParam = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.PathParam");
 		this.context = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.core.Context");
+		this.jsonSubTypes = (Class<? extends Annotation>) classLoader.loadClass("com.fasterxml.jackson.annotation.JsonSubTypes");
+		this.jsonTypeInfo = (Class<? extends Annotation>) classLoader.loadClass("com.fasterxml.jackson.annotation.JsonTypeInfo");
 	}
 
 }

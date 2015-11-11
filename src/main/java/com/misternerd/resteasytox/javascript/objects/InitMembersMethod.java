@@ -16,10 +16,10 @@ public class InitMembersMethod extends JavascriptMethod
 	@Override
 	public void build(StringBuilder sb, int indentCount)
 	{
-		for (JavascriptMember member : jsClass.getMembers())
+		for (JavascriptPublicMember member : jsClass.getPublicMembers())
 		{
 			this.addParameter(new JavascriptParameter(member));
-			addBody("%s = _%s;", member.name, member.name);
+			addBody("self.%s = _%s;", member.name, member.name);
 		}
 
 		addBody("return self;");
