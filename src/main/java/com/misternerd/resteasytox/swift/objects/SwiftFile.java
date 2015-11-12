@@ -28,5 +28,10 @@ public abstract class SwiftFile
 		String content = build();
 		Files.write(outputPath, content.toString().getBytes("UTF-8"));
 	}
+	
+	protected void buildFileFooter(StringBuilder sb)
+	{
+		sb.append("\n}");
+	}
 
 }

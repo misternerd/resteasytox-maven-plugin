@@ -8,12 +8,16 @@ public class SwiftEnum extends SwiftFile
 {
 	private final List<SwiftEnumItem> enumItems = new ArrayList<>();
 
+
 	public SwiftEnum(Path outputPath, String name)
 	{
 		super(outputPath, name);
 	}
-	
-	public void addEnumItem(SwiftEnumItem enumItem){
+
+
+	public void addEnumItem(String name, String value)
+	{
+		SwiftEnumItem enumItem = new SwiftEnumItem(name, value);
 		enumItems.add(enumItem);
 	}
 
@@ -36,16 +40,13 @@ public class SwiftEnum extends SwiftFile
 		sb.append("enum ").append(name).append(": String {");
 	}
 
-	private void buildEnum(StringBuilder sb){
+
+	private void buildEnum(StringBuilder sb)
+	{
 		for (SwiftEnumItem item : enumItems)
 		{
 			sb.append("\n\t");
 			item.build(sb);
 		}
-	}
-
-	private void buildFileFooter(StringBuilder sb)
-	{
-		sb.append("\n}");
 	}
 }

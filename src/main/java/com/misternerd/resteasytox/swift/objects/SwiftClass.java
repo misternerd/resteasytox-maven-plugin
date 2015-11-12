@@ -1,10 +1,14 @@
 package com.misternerd.resteasytox.swift.objects;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SwiftClass extends SwiftFile
 {
 	private final String superClass;
+
+	private final List<SwiftProperty> properties = new ArrayList<>();
 
 
 	public SwiftClass(Path outputPath, String name, String superClass)
@@ -14,12 +18,20 @@ public class SwiftClass extends SwiftFile
 	}
 
 
+	public void addProperty(SwiftProperty property)
+	{
+		properties.add(property);
+	}
+
+
 	@Override
 	public String build()
 	{
 		StringBuilder sb = new StringBuilder();
 
 		buildFileHeader(sb);
+
+		buildProperties(sb);
 
 		buildFileFooter(sb);
 
@@ -40,8 +52,12 @@ public class SwiftClass extends SwiftFile
 	}
 
 
-	public void buildFileFooter(StringBuilder sb)
+	private void buildProperties(StringBuilder sb)
 	{
-		sb.append("}");
+		for (SwiftProperty property : properties)
+		{
+			sb.append("\n\t");
+			property.build(sb);
+		}
 	}
 }
