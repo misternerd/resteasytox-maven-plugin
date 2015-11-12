@@ -72,10 +72,33 @@ public class InitFromJsonMethod extends JavascriptMethod
 
 	private boolean createDtoAssignment(Field member, String memberName)
 	{
-		//TODO Add inheritance
-		String className = member.getType().getSimpleName();
-		addBody("\tself.%s = new %s();", memberName, className);
-		addBody("\tself.%s.initFromJson(jsonData['%s']);", memberName, memberName);
+		if(layout.abstractDtos.containsKey(member.getType()))
+		{
+			AbstractDto abstractDto = layout.abstractDtos.get(member.getType());
+
+			addBody("\tvar classType = jsonData['%s']['%s'];", memberName, abstractDto.typeInfoField);
+			addBody("\tswitch(classType)");
+			addBody("\t{");
+				for(String typeName : abstractDto.implementingClassesByTypeName.keySet())
+				{
+					String concreteName = abstractDto.implementingClassesByTypeName.get(typeName).getSimpleName();
+					addBody("\t\tcase '%s':", typeName);
+					addBody("\t\t{");
+						addBody("\t\t\tself.%s = new %s();", memberName, concreteName);
+						addBody("\t\t\tself.%s.initFromJson(jsonData['%s']);", memberName, memberName);
+						addBody("\t\t\tself.%s.TYPE = '%s';", memberName, concreteName);
+						addBody("\t\t\tbreak;");
+					addBody("\t\t}");
+				}
+			addBody("\t}");
+		}
+		else
+		{
+			String className = member.getType().getSimpleName();
+			addBody("\tself.%s = new %s();", memberName, className);
+			addBody("\tself.%s.initFromJson(jsonData['%s']);", memberName, memberName);
+		}
+
 		return true;
 	}
 

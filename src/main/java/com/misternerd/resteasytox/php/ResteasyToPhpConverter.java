@@ -219,7 +219,14 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		for (Field field : constants)
 		{
-			phpClass.addConstant(field.getName(), field.getInt(null));
+			try
+			{
+				phpClass.addConstant(field.getName(), field.getInt(null));
+			}
+			catch(Throwable tr)
+			{
+				phpClass.addConstant(field.getName(), field.get(null).toString());
+			}
 		}
 
 		constants = getEnumConstants(cls);
