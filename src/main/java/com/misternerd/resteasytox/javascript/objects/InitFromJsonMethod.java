@@ -28,7 +28,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 			Class<?> cls = member.getType();
 
 			addLine();
-			addBody("if('%s' in jsonData)", memberName);
+			addBody("if('%s' in jsonData && jsonData['%s'] != null)", memberName, memberName);
 			addBody("{");
 
 			boolean bodyComplete = false;
@@ -48,6 +48,10 @@ public class InitFromJsonMethod extends JavascriptMethod
 				bodyComplete = createDefaultAssignment(memberName);
 			}
 
+			addBody("}");
+			addBody("else");
+			addBody("{");
+				addBody("\tself.%s = null;", memberName);
 			addBody("}");
 		}
 
