@@ -7,9 +7,11 @@ import com.misternerd.resteasytox.swift.helper.BuildableHelper;
 
 public class SwiftMethod extends Buildable
 {
+	protected static final String INIT_FUNCTION_NAME = "init";
+
 	private final String name;
 
-	private final List<SwiftParameter> parameters = new ArrayList<>();
+	private final List<SwiftProperty> parameters = new ArrayList<>();
 
 	private final List<String> body = new ArrayList<>();
 
@@ -21,7 +23,7 @@ public class SwiftMethod extends Buildable
 	}
 
 
-	public void addParameter(SwiftParameter parameter)
+	public void addParameter(SwiftProperty parameter)
 	{
 		parameters.add(parameter);
 	}
@@ -36,10 +38,19 @@ public class SwiftMethod extends Buildable
 	public void build(StringBuilder sb, int indent)
 	{
 		BuildableHelper.addIndent(sb, indent);
-		sb.append("init(");
+
+		if (INIT_FUNCTION_NAME.equals(name))
+		{
+			sb.append(INIT_FUNCTION_NAME);
+		}
+		else
+		{
+			sb.append("func ").append(name);
+		}
+		sb.append("(");
 		for (int i = 0; i < parameters.size(); i++)
 		{
-			SwiftParameter parameter = parameters.get(i);
+			SwiftProperty parameter = parameters.get(i);
 			parameter.build(sb);
 
 			if (i < parameters.size() - 1)

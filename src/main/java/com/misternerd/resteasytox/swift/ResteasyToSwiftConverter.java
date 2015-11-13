@@ -39,6 +39,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 		generateDtos();
 		generateRequestObjects();
+		generateResponseObjects();
 	}
 
 
@@ -66,6 +67,8 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 				swiftClass.setIncludeConstructor(true);
 
+				// TODO: Integrate generation from and to json object
+
 				swiftFile = swiftClass;
 			}
 
@@ -87,6 +90,37 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
 			writeProperties(swiftClass, fields);
 
+			List<Field> constants = getPublicClassConstants(cls);
+			writeConstants(swiftClass, constants);
+
+			swiftClass.setIncludeConstructor(true);
+			// TODO: Integrate generation to json object
+
+			swiftClass.writeToFile();
+
+		}
+	}
+
+
+	private void generateResponseObjects() throws Exception
+	{
+		for (Class<?> cls : layout.getResponseClasses())
+		{
+			Path classPath = getOutputPathFromJavaPackage(cls);
+			String name = cls.getSimpleName();
+			String superClass = getSuperClassName(cls);
+
+			SwiftClass swiftClass = new SwiftClass(classPath, name, superClass);
+
+			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
+			writeProperties(swiftClass, fields);
+
+			List<Field> constants = getPublicClassConstants(cls);
+			writeConstants(swiftClass, constants);
+
+			swiftClass.setIncludeConstructor(true);
+			// TODO: Integrate generation from json object
+
 			swiftClass.writeToFile();
 
 		}
@@ -104,6 +138,40 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	}
 
 
+	/**
+	 * Currently only supports String and int
+	 */
+	private String getDefaultValue(Field field)
+	{
+
+		String defaultValue = null;
+
+		try
+		{
+			int intValue = field.getInt(null);
+			defaultValue = Integer.toString(intValue);
+		}
+		catch (Exception e)
+		{
+			// We did not get a value, so there is no default int
+		}
+
+		if (defaultValue == null)
+		{
+			try
+			{
+				defaultValue = (String) field.get(null);
+			}
+			catch (Exception e)
+			{
+				// We did not get a value, so there is no default string
+			}
+		}
+
+		return defaultValue;
+	}
+
+
 	private void writeProperties(SwiftClass swiftClass, List<Field> fields)
 	{
 		for (Field field : fields)
@@ -111,9 +179,25 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			boolean isStatic = Modifier.isStatic(field.getModifiers());
 			boolean isFinal = Modifier.isFinal(field.getModifiers());
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
+			String defaultValue = getDefaultValue(field);
 
-			SwiftProperty property = new SwiftProperty(isStatic, isFinal, typeLib.getSwiftType(field), field.getName(), isOptional);
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, typeLib.getSwiftType(field), field.getName(), isOptional, defaultValue);
 			swiftClass.addProperty(property);
+		}
+	}
+
+
+	private void writeConstants(SwiftClass swiftClass, List<Field> fields)
+	{
+		for (Field field : fields)
+		{
+			boolean isStatic = Modifier.isStatic(field.getModifiers());
+			boolean isFinal = Modifier.isFinal(field.getModifiers());
+			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
+			String defaultValue = getDefaultValue(field);
+
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, typeLib.getSwiftType(field), field.getName(), isOptional, defaultValue);
+			swiftClass.addConstant(property);
 		}
 	}
 

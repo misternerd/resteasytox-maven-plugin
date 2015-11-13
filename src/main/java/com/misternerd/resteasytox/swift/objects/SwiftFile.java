@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.misternerd.resteasytox.swift.helper.BuildableHelper;
+
 public abstract class SwiftFile
 {
 
@@ -32,7 +34,8 @@ public abstract class SwiftFile
 
 	protected void buildFileFooter(StringBuilder sb)
 	{
-		sb.append("\n}");
+		BuildableHelper.addNewline(sb);
+		sb.append("}");
 	}
 
 }

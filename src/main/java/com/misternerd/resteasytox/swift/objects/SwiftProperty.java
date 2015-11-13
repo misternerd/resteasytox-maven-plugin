@@ -2,18 +2,20 @@ package com.misternerd.resteasytox.swift.objects;
 
 public class SwiftProperty extends Buildable
 {
-	protected final boolean isStatic;
+	private final boolean isStatic;
 
-	protected boolean isFinal;
+	private boolean isFinal;
 
-	protected SwiftType type;
+	private SwiftType type;
 
-	protected String name;
+	private String name;
 
-	protected boolean isOptional;
+	private boolean isOptional;
+
+	private final String defaultValue;
 
 
-	public SwiftProperty(boolean isStatic, boolean isFinal, SwiftType type, String name, boolean isOptional)
+	public SwiftProperty(boolean isStatic, boolean isFinal, SwiftType type, String name, boolean isOptional, String defaultValue)
 	{
 		super();
 		this.isStatic = isStatic;
@@ -21,6 +23,36 @@ public class SwiftProperty extends Buildable
 		this.type = type;
 		this.name = name;
 		this.isOptional = isOptional;
+		this.defaultValue = defaultValue;
+	}
+
+
+	public String lineForConstructor()
+	{
+		return "self." + name + " = " + name;
+	}
+
+
+	public void buildParameter(StringBuilder sb)
+	{
+		if (isFinal)
+		{
+			sb.append("let ");
+		}
+
+		sb.append(name).append(": ");
+
+		type.build(sb);
+
+		if (isOptional)
+		{
+			sb.append("?");
+		}
+
+		if (defaultValue != null)
+		{
+			sb.append(" = ").append(defaultValue);
+		}
 	}
 
 
@@ -48,6 +80,11 @@ public class SwiftProperty extends Buildable
 		if (isOptional)
 		{
 			sb.append("?");
+		}
+
+		if (defaultValue != null)
+		{
+			sb.append(" = ").append(defaultValue);
 		}
 	}
 }

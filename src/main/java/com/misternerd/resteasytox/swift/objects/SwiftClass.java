@@ -3,11 +3,15 @@ package com.misternerd.resteasytox.swift.objects;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
+import com.misternerd.resteasytox.swift.helper.BuildableHelper;
+
 public class SwiftClass extends SwiftFile
 {
 	private final String superClass;
 
 	private final ArrayList<SwiftProperty> properties = new ArrayList<>();
+
+	private final ArrayList<SwiftProperty> constants = new ArrayList<>();
 
 	private boolean includeConstructor = false;
 
@@ -22,6 +26,12 @@ public class SwiftClass extends SwiftFile
 	public void addProperty(SwiftProperty property)
 	{
 		properties.add(property);
+	}
+
+
+	public void addConstant(SwiftProperty property)
+	{
+		constants.add(property);
 	}
 
 
@@ -43,6 +53,7 @@ public class SwiftClass extends SwiftFile
 		buildFileHeader(sb);
 
 		indent++;
+		buildConstants(sb, indent);
 		buildProperties(sb, indent);
 		buildConstructor(sb, indent);
 		indent--;
@@ -70,8 +81,22 @@ public class SwiftClass extends SwiftFile
 	{
 		if (includeConstructor)
 		{
-			SwiftConstructorMethod constructor = new SwiftConstructorMethod(name, properties);
+			SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties);
 			constructor.buildNewline(sb, indent);
+		}
+	}
+
+
+	private void buildConstants(StringBuilder sb, int indent)
+	{
+		if (!constants.isEmpty())
+		{
+			BuildableHelper.addNewline(sb);
+
+			for (SwiftProperty constant : constants)
+			{
+				constant.buildNewline(sb, indent);
+			}
 		}
 	}
 
@@ -80,6 +105,8 @@ public class SwiftClass extends SwiftFile
 	{
 		if (!properties.isEmpty())
 		{
+			BuildableHelper.addNewline(sb);
+
 			for (SwiftProperty property : properties)
 			{
 				property.buildNewline(sb, indent);

@@ -5,15 +5,14 @@ import java.util.ArrayList;
 public class SwiftConstructorMethod extends SwiftMethod
 {
 
-	public SwiftConstructorMethod(String name, ArrayList<SwiftProperty> properties)
+	public SwiftConstructorMethod(ArrayList<SwiftProperty> properties)
 	{
-		super(name);
+		super(INIT_FUNCTION_NAME);
 
 		for (SwiftProperty property : properties)
 		{
-			SwiftParameter parameter = new SwiftParameter(property, null);
-			addParameter(parameter);
-			addBody(parameter.lineForConstructor());
+			addParameter(property);
+			addBody(property.lineForConstructor());
 		}
 
 		addBody("super.init()");
