@@ -10,6 +10,7 @@ public class ReflectionHelper
 {
 	/**
 	 * Will check the nillable flag of the xmlElement Annotation.
+	 * 
 	 * @return true, if the nillable flag is set.
 	 */
 	public static boolean isOptional(Field field, JaxWsAnnotations jaxWsAnnotations)

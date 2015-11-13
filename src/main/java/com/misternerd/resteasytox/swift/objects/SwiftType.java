@@ -1,6 +1,6 @@
 package com.misternerd.resteasytox.swift.objects;
 
-public class SwiftType implements Buildable
+public class SwiftType extends Buildable
 {
 	public static final String BOOL = "Bool";
 	public static final String STRING = "String";
@@ -13,9 +13,12 @@ public class SwiftType implements Buildable
 
 	private boolean isArray;
 
-	public SwiftType(String name) {
+
+	public SwiftType(String name)
+	{
 		this(name, false);
 	}
+
 
 	public SwiftType(String name, boolean isArray)
 	{
@@ -35,20 +38,25 @@ public class SwiftType implements Buildable
 		return isArray;
 	}
 
+
 	public void setArray(boolean isArray)
 	{
 		this.isArray = isArray;
 	}
-	
+
+
 	@Override
-	public void build(StringBuilder sb) {
-		if (isArray) {
+	public void build(StringBuilder sb)
+	{
+		if (isArray)
+		{
 			sb.append("[");
 		}
-		
+
 		sb.append(name);
-		
-		if (isArray) {
+
+		if (isArray)
+		{
 			sb.append("]");
 		}
 	}

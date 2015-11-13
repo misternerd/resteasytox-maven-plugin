@@ -1,6 +1,6 @@
 package com.misternerd.resteasytox.swift.objects;
 
-public class SwiftEnumItem implements Buildable
+public class SwiftEnumItem extends Buildable
 {
 	private final String name;
 

@@ -2,13 +2,14 @@ package com.misternerd.resteasytox.swift.objects;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SwiftClass extends SwiftFile
 {
 	private final String superClass;
 
-	private final List<SwiftProperty> properties = new ArrayList<>();
+	private final ArrayList<SwiftProperty> properties = new ArrayList<>();
+
+	private boolean includeConstructor = false;
 
 
 	public SwiftClass(Path outputPath, String name, String superClass)
@@ -24,14 +25,27 @@ public class SwiftClass extends SwiftFile
 	}
 
 
+	/**
+	 * Defaults to false
+	 */
+	public void setIncludeConstructor(boolean includeConstructor)
+	{
+		this.includeConstructor = includeConstructor;
+	}
+
+
 	@Override
 	public String build()
 	{
 		StringBuilder sb = new StringBuilder();
+		int indent = 0;
 
 		buildFileHeader(sb);
 
-		buildProperties(sb);
+		indent++;
+		buildProperties(sb, indent);
+		buildConstructor(sb, indent);
+		indent--;
 
 		buildFileFooter(sb);
 
@@ -39,7 +53,7 @@ public class SwiftClass extends SwiftFile
 	}
 
 
-	public void buildFileHeader(StringBuilder sb)
+	private void buildFileHeader(StringBuilder sb)
 	{
 		sb.append("class ").append(name);
 
@@ -52,12 +66,24 @@ public class SwiftClass extends SwiftFile
 	}
 
 
-	private void buildProperties(StringBuilder sb)
+	private void buildConstructor(StringBuilder sb, int indent)
 	{
-		for (SwiftProperty property : properties)
+		if (includeConstructor)
 		{
-			sb.append("\n\t");
-			property.build(sb);
+			SwiftConstructorMethod constructor = new SwiftConstructorMethod(name, properties);
+			constructor.buildNewline(sb, indent);
+		}
+	}
+
+
+	private void buildProperties(StringBuilder sb, int indent)
+	{
+		if (!properties.isEmpty())
+		{
+			for (SwiftProperty property : properties)
+			{
+				property.buildNewline(sb, indent);
+			}
 		}
 	}
 }

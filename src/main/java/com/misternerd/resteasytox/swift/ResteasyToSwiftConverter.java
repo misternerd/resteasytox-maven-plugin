@@ -36,7 +36,9 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 		{
 			Files.createDirectories(outputPath);
 		}
+
 		generateDtos();
+		generateRequestObjects();
 	}
 
 
@@ -49,20 +51,20 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 			String name = cls.getSimpleName();
 
+			// A DTO may just be a plain enum, so we don't have to create a
+			// class in this case.
 			SwiftFile swiftFile = mayGeneratePlainEnum(cls, classPath, name);
 
 			if (swiftFile == null)
 			{
-				String superClass = null;
-				if (cls.getSuperclass() != null)
-				{
-					superClass = cls.getSuperclass().getSimpleName();
-				}
-				List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
+				String superClass = getSuperClassName(cls);
 
 				SwiftClass swiftClass = new SwiftClass(classPath, name, superClass);
 
-				writeFields(swiftClass, fields);
+				List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
+				writeProperties(swiftClass, fields);
+
+				swiftClass.setIncludeConstructor(true);
 
 				swiftFile = swiftClass;
 			}
@@ -72,7 +74,37 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	}
 
 
-	private void writeFields(SwiftClass swiftClass, List<Field> fields)
+	private void generateRequestObjects() throws Exception
+	{
+		for (Class<?> cls : layout.getRequestClasses())
+		{
+			Path classPath = getOutputPathFromJavaPackage(cls);
+			String name = cls.getSimpleName();
+			String superClass = getSuperClassName(cls);
+
+			SwiftClass swiftClass = new SwiftClass(classPath, name, superClass);
+
+			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
+			writeProperties(swiftClass, fields);
+
+			swiftClass.writeToFile();
+
+		}
+	}
+
+
+	private String getSuperClassName(Class<?> cls)
+	{
+		String superClass = null;
+		if (cls.getSuperclass() != null)
+		{
+			superClass = cls.getSuperclass().getSimpleName();
+		}
+		return superClass;
+	}
+
+
+	private void writeProperties(SwiftClass swiftClass, List<Field> fields)
 	{
 		for (Field field : fields)
 		{

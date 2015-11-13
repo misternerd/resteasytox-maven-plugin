@@ -1,16 +1,16 @@
 package com.misternerd.resteasytox.swift.objects;
 
-public class SwiftProperty implements Buildable
+public class SwiftProperty extends Buildable
 {
-	private final boolean isStatic;
+	protected final boolean isStatic;
 
-	private boolean isFinal;
+	protected boolean isFinal;
 
-	private SwiftType type;
+	protected SwiftType type;
 
-	private String name;
+	protected String name;
 
-	private boolean isOptional;
+	protected boolean isOptional;
 
 
 	public SwiftProperty(boolean isStatic, boolean isFinal, SwiftType type, String name, boolean isOptional)
