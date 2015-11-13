@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.misternerd.resteasytox.AbstractResteasyConverter;
 import com.misternerd.resteasytox.RestServiceLayout;
+import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.swift.helper.ReflectionHelper;
 import com.misternerd.resteasytox.swift.objects.SwiftClass;
 import com.misternerd.resteasytox.swift.objects.SwiftEnum;
@@ -19,13 +20,18 @@ import com.misternerd.resteasytox.swift.objects.SwiftProperty;
 
 public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 {
+	private static final String FILE_EXTENSION = ".swift";
+
 	private SwiftTypeLib typeLib;
 
+	private boolean generateAlamofireServices;
 
-	public ResteasyToSwiftConverter(Path outputPath, String javaPackageName, RestServiceLayout layout)
+
+	public ResteasyToSwiftConverter(Path outputPath, String javaPackageName, RestServiceLayout layout, boolean generateAlamofireServices)
 	{
 		super(outputPath, javaPackageName, layout);
-		typeLib = new SwiftTypeLib();
+		this.typeLib = new SwiftTypeLib();
+		this.generateAlamofireServices = generateAlamofireServices;
 	}
 
 
@@ -40,6 +46,11 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 		generateDtos();
 		generateRequestObjects();
 		generateResponseObjects();
+
+		if (generateAlamofireServices)
+		{
+			generateServiceClasses();
+		}
 	}
 
 
@@ -120,6 +131,23 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 			swiftClass.setIncludeConstructor(true);
 			// TODO: Integrate generation from json object
+
+			swiftClass.writeToFile();
+
+		}
+	}
+
+
+	private void generateServiceClasses() throws IOException
+	{
+
+		for (ServiceClass serviceClass : layout.getServiceClasses())
+		{
+
+			// TODO: We might want to add a superclass here
+			Path filePath = getOrCreateFilePath(outputPath, "service", serviceClass.name + FILE_EXTENSION);
+			
+			SwiftClass swiftClass = new SwiftClass(filePath, serviceClass.name, null);
 
 			swiftClass.writeToFile();
 
@@ -237,7 +265,23 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			Files.createDirectories(outputPath);
 		}
 
-		return Paths.get(outputPath.toString(), cls.getSimpleName() + ".swift");
+		return Paths.get(outputPath.toString(), cls.getSimpleName() + FILE_EXTENSION);
+	}
+
+
+	private Path getOrCreateFilePath(Path path, String addon, String file) throws IOException
+	{
+		Path outputPath = path;
+		if (addon != null)
+		{
+			outputPath = Paths.get(outputPath.toString(), addon);
+			if (!Files.isDirectory(outputPath))
+			{
+				Files.createDirectories(outputPath);
+			}
+		}
+		
+		return Paths.get(outputPath.toString(), file);
 	}
 
 }

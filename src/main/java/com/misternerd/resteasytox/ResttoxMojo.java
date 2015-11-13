@@ -65,6 +65,9 @@ public class ResttoxMojo extends AbstractMojo
 
 	@Parameter(property = "swiftOutputPath", defaultValue = "/tmp/swift")
 	private String swiftOutputPath;
+	
+	@Parameter(property = "generateAlamofireServices", defaultValue = "false")
+	private boolean generateAlamofireServices;
 
 	@Component
 	private MavenProject project;
@@ -119,7 +122,7 @@ public class ResttoxMojo extends AbstractMojo
 			{
 				logger.debug("Converting REST API to Swift with target dir = " + swiftOutputPath);
 				Path outputPath = verifyOrCreatePath(swiftOutputPath);
-				ResteasyToSwiftConverter converter = new ResteasyToSwiftConverter(outputPath, javaPackageName, serviceLayout);
+				ResteasyToSwiftConverter converter = new ResteasyToSwiftConverter(outputPath, javaPackageName, serviceLayout, generateAlamofireServices);
 				converter.convert();
 			}
 		}
