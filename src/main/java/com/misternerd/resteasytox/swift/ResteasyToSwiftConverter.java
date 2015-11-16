@@ -12,17 +12,18 @@ import java.util.List;
 import com.misternerd.resteasytox.AbstractResteasyConverter;
 import com.misternerd.resteasytox.RestServiceLayout;
 import com.misternerd.resteasytox.base.ServiceClass;
+import com.misternerd.resteasytox.base.ServiceMethod;
 import com.misternerd.resteasytox.swift.helper.ReflectionHelper;
+import com.misternerd.resteasytox.swift.helper.SwiftTypeHelper;
 import com.misternerd.resteasytox.swift.objects.SwiftClass;
 import com.misternerd.resteasytox.swift.objects.SwiftEnum;
 import com.misternerd.resteasytox.swift.objects.SwiftFile;
 import com.misternerd.resteasytox.swift.objects.SwiftProperty;
+import com.misternerd.resteasytox.swift.objects.SwiftServiceMethod;
 
 public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 {
 	private static final String FILE_EXTENSION = ".swift";
-
-	private SwiftTypeLib typeLib;
 
 	private boolean generateAlamofireServices;
 
@@ -30,7 +31,6 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	public ResteasyToSwiftConverter(Path outputPath, String javaPackageName, RestServiceLayout layout, boolean generateAlamofireServices)
 	{
 		super(outputPath, javaPackageName, layout);
-		this.typeLib = new SwiftTypeLib();
 		this.generateAlamofireServices = generateAlamofireServices;
 	}
 
@@ -146,8 +146,13 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 			// TODO: We might want to add a superclass here
 			Path filePath = getOrCreateFilePath(outputPath, "service", serviceClass.name + FILE_EXTENSION);
-			
+
 			SwiftClass swiftClass = new SwiftClass(filePath, serviceClass.name, null);
+
+			for (ServiceMethod method : serviceClass.methods)
+			{
+				writeServiceMethods(swiftClass, method);
+			}
 
 			swiftClass.writeToFile();
 
@@ -209,7 +214,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
 			String defaultValue = getDefaultValue(field);
 
-			SwiftProperty property = new SwiftProperty(isStatic, isFinal, typeLib.getSwiftType(field), field.getName(), isOptional, defaultValue);
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue);
 			swiftClass.addProperty(property);
 		}
 	}
@@ -224,9 +229,17 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
 			String defaultValue = getDefaultValue(field);
 
-			SwiftProperty property = new SwiftProperty(isStatic, isFinal, typeLib.getSwiftType(field), field.getName(), isOptional, defaultValue);
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue);
 			swiftClass.addConstant(property);
 		}
+	}
+
+
+	private void writeServiceMethods(SwiftClass swiftClass, ServiceMethod serviceMethod)
+	{
+		System.out.println(String.format("ServiceMethod: %s", serviceMethod.name));
+		SwiftServiceMethod method = new SwiftServiceMethod(serviceMethod);
+		swiftClass.addMethod(method);
 	}
 
 
@@ -280,7 +293,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 				Files.createDirectories(outputPath);
 			}
 		}
-		
+
 		return Paths.get(outputPath.toString(), file);
 	}
 

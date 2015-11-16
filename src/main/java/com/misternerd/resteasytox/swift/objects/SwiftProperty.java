@@ -1,6 +1,6 @@
 package com.misternerd.resteasytox.swift.objects;
 
-public class SwiftProperty extends Buildable
+public class SwiftProperty extends Buildable implements ParameterBuildable
 {
 	private final boolean isStatic;
 
@@ -33,6 +33,7 @@ public class SwiftProperty extends Buildable
 	}
 
 
+	@Override
 	public void buildParameter(StringBuilder sb)
 	{
 		if (isFinal)

@@ -13,6 +13,8 @@ public class SwiftClass extends SwiftFile
 
 	private final ArrayList<SwiftProperty> constants = new ArrayList<>();
 
+	private final ArrayList<SwiftMethod> methods = new ArrayList<>();
+
 	private boolean includeConstructor = false;
 
 
@@ -32,6 +34,12 @@ public class SwiftClass extends SwiftFile
 	public void addConstant(SwiftProperty property)
 	{
 		constants.add(property);
+	}
+
+
+	public void addMethod(SwiftMethod method)
+	{
+		methods.add(method);
 	}
 
 
@@ -56,6 +64,7 @@ public class SwiftClass extends SwiftFile
 		buildConstants(sb, indent);
 		buildProperties(sb, indent);
 		buildConstructor(sb, indent);
+		buildMethods(sb, indent);
 		indent--;
 
 		buildFileFooter(sb);
@@ -83,6 +92,20 @@ public class SwiftClass extends SwiftFile
 		{
 			SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties);
 			constructor.buildNewline(sb, indent);
+		}
+	}
+
+
+	private void buildMethods(StringBuilder sb, int indent)
+	{
+		if (!methods.isEmpty())
+		{
+			BuildableHelper.addNewline(sb);
+
+			for (SwiftMethod method : methods)
+			{
+				method.buildNewline(sb, indent);
+			}
 		}
 	}
 
