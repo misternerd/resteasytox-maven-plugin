@@ -92,6 +92,38 @@ public abstract class AbstractResteasyConverter
 		return members;
 	}
 
+	
+	protected List<Field> getMemberVariablesOfAllSuperclasses(Class<?> cls)
+	{
+		List<Field> members = getMemberVariablesOfSuperclass(cls);
+		
+		Collections.sort(members, new FieldComparator());
+
+		return members;
+	}
+	
+	
+	private List<Field> getMemberVariablesOfSuperclass(Class<?> cls)
+	{
+		List<Field> members = new ArrayList<>();
+		
+		if(cls.getSuperclass() != null && cls.getSuperclass() != Object.class)
+		{
+			for(Field field : cls.getSuperclass().getDeclaredFields())
+			{
+				if (isPrivateOrProtectedMemberField(field))
+				{
+					members.add(field);
+				}
+			}
+			
+			members.addAll(getMemberVariablesOfAllSuperclasses(cls.getSuperclass()));
+		}
+		
+		return members;
+		
+	}
+
 
 	private boolean isPrivateOrProtectedMemberField(Field field)
 	{

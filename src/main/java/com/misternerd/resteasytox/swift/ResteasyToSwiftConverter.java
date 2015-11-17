@@ -126,6 +126,9 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
 			writeProperties(swiftClass, fields);
 
+			List<Field> superProperties = getMemberVariablesOfAllSuperclasses(cls);
+			writePropertiesOfSuper(swiftClass, superProperties);
+
 			List<Field> constants = getPublicClassConstants(cls);
 			writeConstants(swiftClass, constants);
 
@@ -220,6 +223,21 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	}
 
 
+	private void writePropertiesOfSuper(SwiftClass swiftClass, List<Field> fields)
+	{
+		for (Field field : fields)
+		{
+			boolean isStatic = Modifier.isStatic(field.getModifiers());
+			boolean isFinal = Modifier.isFinal(field.getModifiers());
+			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
+			String defaultValue = getDefaultValue(field);
+
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue);
+			swiftClass.addSuperProperty(property);
+		}
+	}
+
+
 	private void writeConstants(SwiftClass swiftClass, List<Field> fields)
 	{
 		for (Field field : fields)
@@ -237,7 +255,6 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 	private void writeServiceMethods(SwiftClass swiftClass, ServiceMethod serviceMethod)
 	{
-		System.out.println(String.format("ServiceMethod: %s", serviceMethod.name));
 		SwiftServiceMethod method = new SwiftServiceMethod(serviceMethod);
 		swiftClass.addMethod(method);
 	}

@@ -11,6 +11,8 @@ public class SwiftClass extends SwiftFile
 
 	private final ArrayList<SwiftProperty> properties = new ArrayList<>();
 
+	private final ArrayList<SwiftProperty> superProperties = new ArrayList<>();
+
 	private final ArrayList<SwiftProperty> constants = new ArrayList<>();
 
 	private final ArrayList<SwiftMethod> methods = new ArrayList<>();
@@ -44,6 +46,12 @@ public class SwiftClass extends SwiftFile
 	public void addMethod(SwiftMethod method)
 	{
 		methods.add(method);
+	}
+
+
+	public void addSuperProperty(SwiftProperty property)
+	{
+		superProperties.add(property);
 	}
 
 
@@ -136,7 +144,7 @@ public class SwiftClass extends SwiftFile
 
 	private void buildConstructor(StringBuilder sb, int indent)
 	{
-		SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties);
+		SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties, superProperties);
 		constructor.buildNewline(sb, indent);
 	}
 
@@ -145,7 +153,7 @@ public class SwiftClass extends SwiftFile
 	{
 		BuildableHelper.addSpace(sb);
 		BuildableHelper.addIndent(sb, indent);
-		sb.append("reqired init(data: [String: AnyObject]) {");
+		sb.append("required init(data: [String: AnyObject]) {");
 
 		indent++;
 		for (SwiftProperty property : properties)

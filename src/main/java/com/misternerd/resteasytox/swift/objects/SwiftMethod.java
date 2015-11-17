@@ -67,13 +67,17 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 			}
 			sb.append("func ").append(name);
 		}
+		
 		sb.append("(");
 		addParameters(sb);
 		sb.append(")");
+		
 		if (!INIT_FUNCTION_NAME.equals(name))
 		{
-			sb.append(" -> ").append(returnType).append(" {");
+			sb.append(" -> ").append(returnType);
 		}
+		
+		sb.append(" {");
 
 		indent++;
 		for (String line : body)
