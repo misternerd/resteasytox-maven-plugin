@@ -27,6 +27,18 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 	}
 
 
+	public String getName()
+	{
+		return name;
+	}
+
+
+	public boolean isOptional()
+	{
+		return isOptional;
+	}
+
+
 	public String lineForConstructor()
 	{
 		return "self." + name + " = " + name;

@@ -17,6 +17,10 @@ public class SwiftClass extends SwiftFile
 
 	private boolean includeConstructor = false;
 
+	private boolean includeAlamofire = false;
+
+	private boolean includeJSONHelper = false;
+
 
 	public SwiftClass(Path outputPath, String name, String superClass)
 	{
@@ -52,29 +56,73 @@ public class SwiftClass extends SwiftFile
 	}
 
 
+	/**
+	 * Defaults to false
+	 */
+	public void setIncludeAlamofire(boolean includeAlamofire)
+	{
+		this.includeAlamofire = includeAlamofire;
+	}
+
+
+	/**
+	 * Defaults to false
+	 */
+	public void setIncludeJSONHelper(boolean includeJSONHelper)
+	{
+		this.includeJSONHelper = includeJSONHelper;
+	}
+
+
 	@Override
 	public String build()
 	{
 		StringBuilder sb = new StringBuilder();
-		int indent = 0;
 
+		int indent = 0;
+		buildImports(sb);
 		buildFileHeader(sb);
 
 		indent++;
 		buildConstants(sb, indent);
 		buildProperties(sb, indent);
-		buildConstructor(sb, indent);
-		buildMethods(sb, indent);
-		indent--;
 
+		if (includeConstructor)
+		{
+			buildConstructor(sb, indent);
+		}
+
+		if (includeJSONHelper)
+		{
+			buildJSONHelperInit(sb, indent);
+		}
+
+		if (includeAlamofire)
+		{
+			buildAlamofireParameter(sb, indent);
+		}
+
+		buildMethods(sb, indent);
+
+		indent--;
 		buildFileFooter(sb);
 
 		return sb.toString();
 	}
 
 
+	private void buildImports(StringBuilder sb)
+	{
+		if (includeJSONHelper)
+		{
+			sb.append("import JSONHelper");
+		}
+	}
+
+
 	private void buildFileHeader(StringBuilder sb)
 	{
+		BuildableHelper.addSpace(sb);
 		sb.append("class ").append(name);
 
 		if (superClass != null)
@@ -88,11 +136,77 @@ public class SwiftClass extends SwiftFile
 
 	private void buildConstructor(StringBuilder sb, int indent)
 	{
-		if (includeConstructor)
+		SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties);
+		constructor.buildNewline(sb, indent);
+	}
+
+
+	private void buildJSONHelperInit(StringBuilder sb, int indent)
+	{
+		BuildableHelper.addSpace(sb);
+		BuildableHelper.addIndent(sb, indent);
+		sb.append("reqired init(data: [String: AnyObject]) {");
+
+		indent++;
+		for (SwiftProperty property : properties)
 		{
-			SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties);
-			constructor.buildNewline(sb, indent);
+			BuildableHelper.addNewline(sb);
+			BuildableHelper.addIndent(sb, indent);
+			sb.append(property.getName()).append(" <-- data[\"").append(property.getName()).append("\"]");
 		}
+
+		BuildableHelper.addNewline(sb);
+		BuildableHelper.addIndent(sb, indent);
+		sb.append("super.init(data: data)");
+
+		indent--;
+		BuildableHelper.addNewline(sb);
+		BuildableHelper.addIndent(sb, indent);
+		sb.append("}");
+	}
+
+
+	private void buildAlamofireParameter(StringBuilder sb, int indent)
+	{
+		BuildableHelper.addSpace(sb);
+		BuildableHelper.addIndent(sb, indent);
+		sb.append("override func parameters(parameters: [String: AnyObject] = [:]) -> [String: AnyObject] {");
+
+		indent++;
+		BuildableHelper.addNewline(sb);
+		BuildableHelper.addIndent(sb, indent);
+		sb.append("var parameters = super.parameters(parameters)");
+
+		for (SwiftProperty property : properties)
+		{
+			if (property.isOptional())
+			{
+				BuildableHelper.addNewline(sb);
+				BuildableHelper.addIndent(sb, indent);
+				sb.append("if let ").append(property.getName()).append(" = ").append(property.getName()).append(" {");
+				indent++;
+			}
+			BuildableHelper.addNewline(sb);
+			BuildableHelper.addIndent(sb, indent);
+			sb.append("parameters[\"").append(property.getName()).append("\"] = ").append(property.getName());
+
+			if (property.isOptional())
+			{
+				indent--;
+				BuildableHelper.addNewline(sb);
+				BuildableHelper.addIndent(sb, indent);
+				sb.append("}");
+			}
+		}
+
+		BuildableHelper.addNewline(sb);
+		BuildableHelper.addIndent(sb, indent);
+		sb.append("return parameters");
+
+		indent--;
+		BuildableHelper.addNewline(sb);
+		BuildableHelper.addIndent(sb, indent);
+		sb.append("}");
 	}
 
 

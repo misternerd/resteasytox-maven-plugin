@@ -105,7 +105,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			writeConstants(swiftClass, constants);
 
 			swiftClass.setIncludeConstructor(true);
-			// TODO: Integrate generation to json object
+			swiftClass.setIncludeAlamofire(generateAlamofireServices);
 
 			swiftClass.writeToFile();
 
@@ -130,7 +130,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			writeConstants(swiftClass, constants);
 
 			swiftClass.setIncludeConstructor(true);
-			// TODO: Integrate generation from json object
+			swiftClass.setIncludeJSONHelper(generateAlamofireServices);
 
 			swiftClass.writeToFile();
 
