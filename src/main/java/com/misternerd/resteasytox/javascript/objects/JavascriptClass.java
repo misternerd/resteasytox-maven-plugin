@@ -85,6 +85,13 @@ public class JavascriptClass
 	}
 
 
+	public JavascriptPublicMember addPublicMember(JavascriptPublicMember member)
+	{
+		publicMembers.add(member);
+		return member;
+	}
+
+
 	public Set<JavascriptPublicMember> getPublicMembers()
 	{
 		return publicMembers;

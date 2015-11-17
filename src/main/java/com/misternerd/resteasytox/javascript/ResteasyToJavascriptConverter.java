@@ -11,6 +11,7 @@ import java.util.List;
 import com.google.common.base.CaseFormat;
 import com.misternerd.resteasytox.AbstractResteasyConverter;
 import com.misternerd.resteasytox.RestServiceLayout;
+import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.base.MethodParameter;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
@@ -21,6 +22,7 @@ import com.misternerd.resteasytox.javascript.objects.InitMembersMethod;
 import com.misternerd.resteasytox.javascript.objects.JavascriptClass;
 import com.misternerd.resteasytox.javascript.objects.JavascriptMethod;
 import com.misternerd.resteasytox.javascript.objects.JavascriptParameter;
+import com.misternerd.resteasytox.javascript.objects.JavascriptPublicMember;
 import com.misternerd.resteasytox.javascript.objects.ToJsonMethod;
 
 
@@ -67,7 +69,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
 			writePrivateAndProtectedFields(jsClass, fields);
 			writePublicGettersAndSetters(jsClass, fields);
-			jsClass.addMethod(new ToJsonMethod(fields, layout));
+			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
 
 			jsClass.writeToFile();
 		}
@@ -86,14 +88,13 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
 			writePrivateAndProtectedFields(jsClass, fields);
 			writePublicGettersAndSetters(jsClass, fields);
-			jsClass.addMethod(new ToJsonMethod(fields, layout));
+			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
 
 			jsClass.writeToFile();
 		}
 	}
 
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void generateDtos() throws Exception
 	{
 		for (Class<?> cls : layout.getDtoClasses())
@@ -104,44 +105,68 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 			if(!enumConstants.isEmpty())
 			{
-				Class<? extends Enum> enumClass = (Class<? extends Enum>) cls;
-
-				for(Field field : enumConstants)
-				{
-					jsClass.addPublicConstant(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
-				}
-
-				jsClass.addPublicMember("value");
-				jsClass.addMethod(new InitMembersMethod(jsClass));
-				jsClass.addMethod("initFromJson")
-					.addParameter(new JavascriptParameter("jsonData"))
-					.addBody("value = jsonData;")
-					.addBody("return self;");
-//				jsClass.addGetter("value");
-//				jsClass.addSetter("value");
-				jsClass.addMethod("toJson")
-					.addParameter(new JavascriptParameter("dontEncode"))
-					.addBody("if(dontEncode)")
-					.addBody("{")
-						.addBody("\treturn value;")
-					.addBody("}")
-					.addBody("else")
-					.addBody("{")
-						.addBody("\treturn JSON.stringify(value);")
-					.addBody("}");
+				generateEnumClass(cls, jsClass, enumConstants);
 			}
 			else
 			{
+				addInheritanceInfoToDto(cls, jsClass);
 				writePrivateAndProtectedFields(jsClass, fields);
 				jsClass.addMemberInitMethod();
 				jsClass.addMethod(new InitFromJsonMethod(fields, layout));
 				writePublicGettersAndSetters(jsClass, fields);
-				jsClass.addMethod(new ToJsonMethod(fields, layout));
+				jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
 			}
 
 			jsClass.writeToFile();
 		}
 	}
+
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void generateEnumClass(Class<?> cls, JavascriptClass jsClass, List<Field> enumConstants)
+	{
+		Class<? extends Enum> enumClass = (Class<? extends Enum>) cls;
+
+		for(Field field : enumConstants)
+		{
+			jsClass.addPublicConstant(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
+		}
+
+		jsClass.addPublicMember("value");
+		jsClass.addMethod(new InitMembersMethod(jsClass));
+		jsClass.addMethod("initFromJson")
+			.addParameter(new JavascriptParameter("jsonData"))
+			.addBody("value = jsonData;")
+			.addBody("return self;");
+		jsClass.addMethod("toJson")
+			.addParameter(new JavascriptParameter("dontEncode"))
+			.addBody("if(dontEncode)")
+			.addBody("{")
+				.addBody("\treturn value;")
+			.addBody("}")
+			.addBody("else")
+			.addBody("{")
+				.addBody("\treturn JSON.stringify(value);")
+			.addBody("}");
+	}
+
+
+	private void addInheritanceInfoToDto(Class<?> cls, JavascriptClass jsClass)
+	{
+		if(cls.getSuperclass() != null && layout.abstractDtos.containsKey(cls.getSuperclass()))
+		{
+			AbstractDto abstractDto = layout.abstractDtos.get(cls.getSuperclass());
+
+			for(String implementingClassName : abstractDto.implementingClassesByTypeName.keySet())
+			{
+				if(abstractDto.implementingClassesByTypeName.get(implementingClassName).equals(cls))
+				{
+					jsClass.addPublicMember(new JavascriptPublicMember(abstractDto.typeInfoField, implementingClassName, true, true));
+				}
+			}
+		}
+	}
+
 
 	private void generateServiceClasses() throws IOException
 	{
@@ -200,15 +225,6 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			method.addBody("var pathParams = null;");
 		}
 
-		if(serviceMethod.bodyParam != null)
-		{
-			method.addParameter(new JavascriptParameter("bodyData"));
-		}
-		else
-		{
-			method.addBody("var bodyData = null;");
-		}
-
 		for(MethodParameter param : serviceMethod.headerParams)
 		{
 			method.addParameter(new JavascriptParameter(convertParamNameToCorrectFormat(param)));
@@ -217,6 +233,15 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		for(MethodParameter param : serviceMethod.pathParams)
 		{
 			method.addParameter(new JavascriptParameter(convertParamNameToCorrectFormat(param)));
+		}
+
+		if(serviceMethod.bodyParam != null)
+		{
+			method.addParameter(new JavascriptParameter("bodyData"));
+		}
+		else
+		{
+			method.addBody("var bodyData = null;");
 		}
 
 		if(RequestMethod.POST.equals(serviceMethod.httpMethod))

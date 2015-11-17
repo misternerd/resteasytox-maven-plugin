@@ -18,6 +18,11 @@ public class InitMembersMethod extends JavascriptMethod
 	{
 		for (JavascriptPublicMember member : jsClass.getPublicMembers())
 		{
+			if(member.noInitialization)
+			{
+				continue;
+			}
+
 			this.addParameter(new JavascriptParameter(member));
 			addBody("self.%s = _%s;", member.name, member.name);
 		}

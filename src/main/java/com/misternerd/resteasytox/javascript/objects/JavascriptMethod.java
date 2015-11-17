@@ -27,7 +27,7 @@ public class JavascriptMethod extends AbstractJavascriptObject
 		return this;
 	}
 
-	
+
 	public JavascriptMethod addLine()
 	{
 		body.add("");
@@ -41,6 +41,7 @@ public class JavascriptMethod extends AbstractJavascriptObject
 	}
 
 
+	@Override
 	public void build(StringBuilder sb, int indentCount)
 	{
 		String indent = "\n" + getIndent(indentCount);
@@ -62,7 +63,7 @@ public class JavascriptMethod extends AbstractJavascriptObject
 
 		for (String bodyLine : body)
 		{
-			if(body.isEmpty())
+			if(bodyLine.isEmpty())
 			{
 				sb.append("\n");
 			}
