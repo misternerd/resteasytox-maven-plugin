@@ -1,6 +1,6 @@
 package com.misternerd.resteasytox.base;
 
-import java.util.Set;
+import java.util.SortedSet;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -22,17 +22,17 @@ public class ServiceMethod
 
 	public final String responseContentType;
 
-	public final Set<MethodParameter> headerParams;
+	public final SortedSet<MethodParameter> headerParams;
 
-	public final Set<MethodParameter> pathParams;
+	public final SortedSet<MethodParameter> pathParams;
 
 	public final MethodParameter bodyParam;
 
 	public final Class<? extends Object> returnType;
 
 
-	public ServiceMethod(String name, String path, RequestMethod httpMethod, String requestContentType, 
-			String responseContentType, Set<MethodParameter> headerParams, Set<MethodParameter> pathParams, 
+	public ServiceMethod(String name, String path, RequestMethod httpMethod, String requestContentType,
+			String responseContentType, SortedSet<MethodParameter> headerParams, SortedSet<MethodParameter> pathParams,
 			MethodParameter bodyParam, Class<? extends Object> returnType)
 	{
 		this.name = name;

@@ -14,12 +14,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.logging.Log;
 
 import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.base.MethodParameter;
+import com.misternerd.resteasytox.base.MethodParameterComparator;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
 import com.misternerd.resteasytox.base.ServiceMethod.RequestMethod;
@@ -128,9 +131,9 @@ public class RestServiceLayout
 				String path = getValueForJaxWsAnnotation(method.getAnnotation(jaxWsAnnotations.path));
 				String requestContentType = getFirstValueForJaxWsAnnotationArray(method.getAnnotation(jaxWsAnnotations.consumes));
 				String responseContentType = getFirstValueForJaxWsAnnotationArray(method.getAnnotation(jaxWsAnnotations.produces));
-				Set<MethodParameter> headerParams = new HashSet<>();
-				Set<MethodParameter> pathParams = new HashSet<>();
-				Set<MethodParameter> bodyParams = new HashSet<>();
+				SortedSet<MethodParameter> headerParams = new TreeSet<>(new MethodParameterComparator());
+				SortedSet<MethodParameter> pathParams = new TreeSet<>(new MethodParameterComparator());
+				SortedSet<MethodParameter> bodyParams = new TreeSet<>(new MethodParameterComparator());
 
 				readParamsFromMethod(method, headerParams, pathParams, bodyParams);
 

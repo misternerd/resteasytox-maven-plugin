@@ -225,15 +225,6 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			method.addBody("var pathParams = null;");
 		}
 
-		if(serviceMethod.bodyParam != null)
-		{
-			method.addParameter(new JavascriptParameter("bodyData"));
-		}
-		else
-		{
-			method.addBody("var bodyData = null;");
-		}
-
 		for(MethodParameter param : serviceMethod.headerParams)
 		{
 			method.addParameter(new JavascriptParameter(convertParamNameToCorrectFormat(param)));
@@ -242,6 +233,15 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		for(MethodParameter param : serviceMethod.pathParams)
 		{
 			method.addParameter(new JavascriptParameter(convertParamNameToCorrectFormat(param)));
+		}
+
+		if(serviceMethod.bodyParam != null)
+		{
+			method.addParameter(new JavascriptParameter("bodyData"));
+		}
+		else
+		{
+			method.addBody("var bodyData = null;");
 		}
 
 		if(RequestMethod.POST.equals(serviceMethod.httpMethod))

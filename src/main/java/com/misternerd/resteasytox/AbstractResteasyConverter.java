@@ -4,7 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import com.misternerd.resteasytox.base.FieldComparator;
 
 public abstract class AbstractResteasyConverter
 {
@@ -55,6 +58,8 @@ public abstract class AbstractResteasyConverter
 			}
 		}
 
+		Collections.sort(result, new FieldComparator());
+
 		return result;
 	}
 
@@ -62,7 +67,7 @@ public abstract class AbstractResteasyConverter
 	protected List<Field> getPrivateAndProtectedMemberVariables(Class<?> cls, boolean withSuperclassFields)
 	{
 		List<Field> members = new ArrayList<>();
-		
+
 		if(withSuperclassFields && cls.getSuperclass() != null)
 		{
 			for(Field field : cls.getSuperclass().getDeclaredFields())
@@ -81,6 +86,8 @@ public abstract class AbstractResteasyConverter
 				members.add(field);
 			}
 		}
+
+		Collections.sort(members, new FieldComparator());
 
 		return members;
 	}
