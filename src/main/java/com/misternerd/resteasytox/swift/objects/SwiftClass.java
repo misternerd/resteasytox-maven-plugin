@@ -144,7 +144,7 @@ public class SwiftClass extends SwiftFile
 
 	private void buildConstructor(StringBuilder sb, int indent)
 	{
-		SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties, superProperties);
+		SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties, superProperties, (superClass != null));
 		constructor.buildNewline(sb, indent);
 	}
 
