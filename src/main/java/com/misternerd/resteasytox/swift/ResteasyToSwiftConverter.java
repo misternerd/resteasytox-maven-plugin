@@ -166,7 +166,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	private String getSuperClassName(Class<?> cls)
 	{
 		String superClass = null;
-		if (cls.getSuperclass() != null)
+		if (cls.getSuperclass() != null && cls.getSuperclass() != Object.class)
 		{
 			superClass = cls.getSuperclass().getSimpleName();
 		}
