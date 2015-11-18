@@ -8,6 +8,7 @@ public class SwiftType extends Buildable
 	public static final String FLOAT = "Float";
 	public static final String DOUBLE = "Double";
 	public static final String NSDATA = "NSData";
+	public static final String NSDATE = "NSDate";
 
 	private final String name;
 

@@ -26,6 +26,7 @@ public class SwiftTypeHelper
 		typeMap.put("double", SwiftType.DOUBLE);
 		typeMap.put("boolean", SwiftType.BOOL);
 		typeMap.put("byte[]", SwiftType.NSDATA);
+		typeMap.put("date", SwiftType.NSDATE);
 	}
 
 

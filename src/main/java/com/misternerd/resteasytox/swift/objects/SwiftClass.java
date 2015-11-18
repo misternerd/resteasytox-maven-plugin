@@ -163,9 +163,12 @@ public class SwiftClass extends SwiftFile
 			sb.append(property.getName()).append(" <-- data[\"").append(property.getName()).append("\"]");
 		}
 
-		BuildableHelper.addNewline(sb);
-		BuildableHelper.addIndent(sb, indent);
-		sb.append("super.init(data: data)");
+		if (superClass != null)
+		{
+			BuildableHelper.addNewline(sb);
+			BuildableHelper.addIndent(sb, indent);
+			sb.append("super.init(data: data)");
+		}
 
 		indent--;
 		BuildableHelper.addNewline(sb);
@@ -178,12 +181,21 @@ public class SwiftClass extends SwiftFile
 	{
 		BuildableHelper.addSpace(sb);
 		BuildableHelper.addIndent(sb, indent);
-		sb.append("override func parameters(parameters: [String: AnyObject] = [:]) -> [String: AnyObject] {");
+
+		if (superClass != null)
+		{
+			sb.append("override ");
+		}
+		sb.append("func parameters(parameters: [String: AnyObject] = [:]) -> [String: AnyObject] {");
 
 		indent++;
-		BuildableHelper.addNewline(sb);
-		BuildableHelper.addIndent(sb, indent);
-		sb.append("var parameters = super.parameters(parameters)");
+
+		if (superClass != null)
+		{
+			BuildableHelper.addNewline(sb);
+			BuildableHelper.addIndent(sb, indent);
+			sb.append("var parameters = super.parameters(parameters)");
+		}
 
 		for (SwiftProperty property : properties)
 		{
