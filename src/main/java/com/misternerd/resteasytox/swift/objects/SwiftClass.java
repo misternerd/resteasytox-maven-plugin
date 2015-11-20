@@ -1,13 +1,13 @@
 package com.misternerd.resteasytox.swift.objects;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 
 import com.misternerd.resteasytox.swift.helper.BuildableHelper;
 
-public class SwiftClass extends SwiftFile
+public class SwiftClass extends Buildable
 {
 	private final String superClass;
+	private final String name;
 
 	private final ArrayList<SwiftProperty> properties = new ArrayList<>();
 
@@ -19,14 +19,14 @@ public class SwiftClass extends SwiftFile
 
 	private boolean includeConstructor = false;
 
-	private boolean includeAlamofire = false;
+	private boolean includeMarshalling = false;
 
-	private boolean includeJSONHelper = false;
+	private boolean includeUnmarshalling = false;
 
 
-	public SwiftClass(Path outputPath, String name, String superClass)
+	public SwiftClass(String name, String superClass)
 	{
-		super(outputPath, name);
+		this.name = name;
 		this.superClass = superClass;
 	}
 
@@ -67,28 +67,27 @@ public class SwiftClass extends SwiftFile
 	/**
 	 * Defaults to false
 	 */
-	public void setIncludeAlamofire(boolean includeAlamofire)
+	public void setIncludeMarshalling(boolean includeMarshalling)
 	{
-		this.includeAlamofire = includeAlamofire;
+		this.includeMarshalling = includeMarshalling;
 	}
 
 
 	/**
 	 * Defaults to false
 	 */
-	public void setIncludeJSONHelper(boolean includeJSONHelper)
+	public void setIncludeUnmarshalling(boolean includeUnmarshalling)
 	{
-		this.includeJSONHelper = includeJSONHelper;
+		this.includeUnmarshalling = includeUnmarshalling;
 	}
 
 
 	@Override
-	public String build()
+	public void build(StringBuilder sb)
 	{
-		StringBuilder sb = new StringBuilder();
-
 		int indent = 0;
 		buildImports(sb);
+
 		buildFileHeader(sb);
 
 		indent++;
@@ -100,31 +99,26 @@ public class SwiftClass extends SwiftFile
 			buildConstructor(sb, indent);
 		}
 
-		if (includeJSONHelper)
+		if (includeUnmarshalling)
 		{
-			buildJSONHelperInit(sb, indent);
+			buildUnmarshalling(sb, indent);
 		}
 
-		if (includeAlamofire)
+		if (includeMarshalling)
 		{
-			buildAlamofireParameter(sb, indent);
+			buildMarshalling(sb, indent);
 		}
 
 		buildMethods(sb, indent);
 
 		indent--;
-		buildFileFooter(sb);
-
-		return sb.toString();
+		buildClassFooter(sb);
 	}
 
 
 	private void buildImports(StringBuilder sb)
 	{
-		if (includeJSONHelper)
-		{
-			sb.append("import JSONHelper");
-		}
+
 	}
 
 
@@ -149,7 +143,7 @@ public class SwiftClass extends SwiftFile
 	}
 
 
-	private void buildJSONHelperInit(StringBuilder sb, int indent)
+	private void buildUnmarshalling(StringBuilder sb, int indent)
 	{
 		BuildableHelper.addSpace(sb);
 		BuildableHelper.addIndent(sb, indent);
@@ -177,7 +171,7 @@ public class SwiftClass extends SwiftFile
 	}
 
 
-	private void buildAlamofireParameter(StringBuilder sb, int indent)
+	private void buildMarshalling(StringBuilder sb, int indent)
 	{
 		BuildableHelper.addSpace(sb);
 		BuildableHelper.addIndent(sb, indent);
@@ -269,5 +263,12 @@ public class SwiftClass extends SwiftFile
 				property.buildNewline(sb, indent);
 			}
 		}
+	}
+
+
+	private void buildClassFooter(StringBuilder sb)
+	{
+		BuildableHelper.addNewline(sb);
+		sb.append("}");
 	}
 }

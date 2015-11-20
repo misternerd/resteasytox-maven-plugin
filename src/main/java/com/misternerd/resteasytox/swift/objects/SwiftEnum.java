@@ -1,17 +1,21 @@
 package com.misternerd.resteasytox.swift.objects;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SwiftEnum extends SwiftFile
+import com.misternerd.resteasytox.swift.helper.BuildableHelper;
+
+public class SwiftEnum extends Buildable
 {
 	private final List<SwiftEnumItem> enumItems = new ArrayList<>();
 
+	private final String name;
 
-	public SwiftEnum(Path outputPath, String name)
+
+	public SwiftEnum(String name)
 	{
-		super(outputPath, name);
+		super();
+		this.name = name;
 	}
 
 
@@ -23,19 +27,16 @@ public class SwiftEnum extends SwiftFile
 
 
 	@Override
-	public String build()
+	public void build(StringBuilder sb)
 	{
-		StringBuilder sb = new StringBuilder();
-
-		buildFileHeader(sb);
+		BuildableHelper.addSpace(sb);
+		buildEnumHeader(sb);
 		buildEnum(sb);
-		buildFileFooter(sb);
-
-		return sb.toString();
+		buildEnumFooter(sb);
 	}
 
 
-	private void buildFileHeader(StringBuilder sb)
+	private void buildEnumHeader(StringBuilder sb)
 	{
 		sb.append("enum ").append(name).append(": String {");
 	}
@@ -48,5 +49,12 @@ public class SwiftEnum extends SwiftFile
 			sb.append("\n\t");
 			item.build(sb);
 		}
+	}
+
+
+	private void buildEnumFooter(StringBuilder sb)
+	{
+		BuildableHelper.addNewline(sb);
+		sb.append("}");
 	}
 }

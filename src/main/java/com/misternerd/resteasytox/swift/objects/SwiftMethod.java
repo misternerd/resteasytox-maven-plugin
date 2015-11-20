@@ -16,8 +16,10 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 	private final List<String> body = new ArrayList<>();
 
 	private boolean isStatic = false;
-	
-	private final String returnType;
+
+	private String returnType;
+
+	private boolean isDefinition = false;
 
 
 	public SwiftMethod(String name)
@@ -46,6 +48,21 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 	}
 
 
+	public void setReturnType(String returnType)
+	{
+		this.returnType = returnType;
+	}
+
+
+	/**
+	 * If set to true, this method will have no body
+	 */
+	public void setIsDefinition(boolean isDefinition)
+	{
+		this.isDefinition = isDefinition;
+	}
+
+
 	public void setStatic(boolean isStatic)
 	{
 		this.isStatic = isStatic;
@@ -62,35 +79,39 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 		}
 		else
 		{
-			if (isStatic) {
+			if (isStatic)
+			{
 				sb.append("static ");
 			}
 			sb.append("func ").append(name);
 		}
-		
+
 		sb.append("(");
 		addParameters(sb);
 		sb.append(")");
-		
+
 		if (!INIT_FUNCTION_NAME.equals(name))
 		{
 			sb.append(" -> ").append(returnType);
 		}
-		
-		sb.append(" {");
 
-		indent++;
-		for (String line : body)
+		if (!isDefinition)
 		{
+			sb.append(" {");
+
+			indent++;
+			for (String line : body)
+			{
+				BuildableHelper.addNewline(sb);
+				BuildableHelper.addIndent(sb, indent);
+				sb.append(line);
+			}
+			indent--;
+
 			BuildableHelper.addNewline(sb);
 			BuildableHelper.addIndent(sb, indent);
-			sb.append(line);
+			sb.append("}");
 		}
-		indent--;
-
-		BuildableHelper.addNewline(sb);
-		BuildableHelper.addIndent(sb, indent);
-		sb.append("}");
 	}
 
 
