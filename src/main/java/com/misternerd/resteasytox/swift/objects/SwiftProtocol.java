@@ -27,7 +27,7 @@ public class SwiftProtocol extends Buildable
 	public void build(StringBuilder sb)
 	{
 		int indent = 0;
-		BuildableHelper.addSpace(sb);
+		BuildableHelper.addNewline(sb);
 		sb.append("protocol ").append(name).append(" {");
 
 		indent++;
@@ -41,7 +41,7 @@ public class SwiftProtocol extends Buildable
 			}
 
 		}
-		
+
 		indent--;
 		BuildableHelper.addNewline(sb);
 		sb.append("}");

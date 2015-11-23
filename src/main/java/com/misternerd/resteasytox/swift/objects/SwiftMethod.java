@@ -21,6 +21,8 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 
 	private boolean isDefinition = false;
 
+	private boolean isOptional = false;
+
 
 	public SwiftMethod(String name)
 	{
@@ -63,6 +65,12 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 	}
 
 
+	public void setOptional(boolean isOptional)
+	{
+		this.isOptional = isOptional;
+	}
+
+
 	public void setStatic(boolean isStatic)
 	{
 		this.isStatic = isStatic;
@@ -84,6 +92,12 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 				sb.append("static ");
 			}
 			sb.append("func ").append(name);
+		}
+
+		if (isOptional)
+		{
+			// This should only be allowed for init methods
+			sb.append("?");
 		}
 
 		sb.append("(");

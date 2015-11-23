@@ -9,15 +9,21 @@ public class SwiftConstructorMethod extends SwiftMethod
 	{
 		super(INIT_FUNCTION_NAME);
 
-		for (SwiftProperty property : superProperties)
+		if (superProperties != null)
 		{
-			addParameter(property);
+			for (SwiftProperty property : superProperties)
+			{
+				addParameter(property);
+			}
 		}
 
-		for (SwiftProperty property : properties)
+		if (properties != null)
 		{
-			addParameter(property);
-			addBody(property.lineForConstructor());
+			for (SwiftProperty property : properties)
+			{
+				addParameter(property);
+				addBody(property.lineForConstructor());
+			}
 		}
 
 		if (hasSuperclass)

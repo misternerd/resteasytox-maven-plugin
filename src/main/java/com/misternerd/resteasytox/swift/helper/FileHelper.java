@@ -21,7 +21,7 @@ public class FileHelper
 			}
 		}
 
-		return Paths.get(outputPath.toString(), file);
+		return Paths.get(outputPath.toString(), file + extension);
 	}
 
 }
