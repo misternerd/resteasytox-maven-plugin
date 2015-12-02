@@ -31,18 +31,12 @@ public class SwiftProtocol extends Buildable
 		sb.append("protocol ").append(name).append(" {");
 
 		indent++;
-		if (!methods.isEmpty())
+		for (SwiftMethod method : methods)
 		{
-			BuildableHelper.addNewline(sb);
-
-			for (SwiftMethod method : methods)
-			{
-				method.buildNewline(sb, indent);
-			}
-
+			method.buildNewline(sb, indent);
 		}
-
 		indent--;
+		
 		BuildableHelper.addNewline(sb);
 		sb.append("}");
 

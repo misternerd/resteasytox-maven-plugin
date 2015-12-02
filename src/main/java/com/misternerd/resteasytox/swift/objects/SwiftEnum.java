@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.misternerd.resteasytox.swift.helper.BuildableHelper;
+import com.misternerd.resteasytox.swift.helper.SwiftMarshallingHelper;
 
 public class SwiftEnum extends Buildable
 {
@@ -11,11 +12,35 @@ public class SwiftEnum extends Buildable
 
 	private final String name;
 
+	private final ArrayList<SwiftMethod> methods = new ArrayList<>();
+
+	private boolean includeMarshalling = false;
+
+	private boolean includeUnmarshalling = false;
+
 
 	public SwiftEnum(String name)
 	{
 		super();
 		this.name = name;
+	}
+
+
+	/**
+	 * Defaults to false
+	 */
+	public void setIncludeMarshalling(boolean includeMarshalling)
+	{
+		this.includeMarshalling = includeMarshalling;
+	}
+
+
+	/**
+	 * Defaults to false
+	 */
+	public void setIncludeUnmarshalling(boolean includeUnmarshalling)
+	{
+		this.includeUnmarshalling = includeUnmarshalling;
 	}
 
 
@@ -26,19 +51,53 @@ public class SwiftEnum extends Buildable
 	}
 
 
+	public void addMethod(SwiftMethod method)
+	{
+		methods.add(method);
+	}
+
+
 	@Override
 	public void build(StringBuilder sb)
 	{
+		if (includeUnmarshalling)
+		{
+			createUnmarshalling();
+		}
+
+		if (includeMarshalling)
+		{
+			createMarshalling();
+		}
+
+		int indent = 0;
 		BuildableHelper.addSpace(sb);
 		buildEnumHeader(sb);
 		buildEnum(sb);
+		indent++;
+		buildEnumMethods(sb, indent);
 		buildEnumFooter(sb);
 	}
 
 
 	private void buildEnumHeader(StringBuilder sb)
 	{
-		sb.append("enum ").append(name).append(": String {");
+		sb.append("enum ").append(name).append(": String");
+
+		if (includeMarshalling || includeUnmarshalling)
+		{
+			if (includeMarshalling)
+			{
+				sb.append(", ").append(SwiftMarshallingHelper.MARSHALLING_PROTOCOL);
+			}
+
+			if (includeUnmarshalling)
+			{
+				sb.append(", ").append(SwiftMarshallingHelper.UNMARSHALLING_PROTOCOL);
+			}
+		}
+		
+		sb.append(" {");
 	}
 
 
@@ -52,9 +111,45 @@ public class SwiftEnum extends Buildable
 	}
 
 
+	private void buildEnumMethods(StringBuilder sb, int indent)
+	{
+		for (SwiftMethod method : methods)
+		{
+			BuildableHelper.addNewline(sb);
+			method.buildNewline(sb, indent);
+		}
+	}
+
+
 	private void buildEnumFooter(StringBuilder sb)
 	{
 		BuildableHelper.addNewline(sb);
 		sb.append("}");
+	}
+
+
+	private void createUnmarshalling()
+	{
+		SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethod();
+
+		method.addBody("guard let genderString = json as? String else {");
+		method.addBody("\treturn nil");
+		method.addBody("}");
+		method.addBody("guard let genderDto = GenderDto(rawValue: genderString) else {");
+		method.addBody("\treturn nil");
+		method.addBody("}");
+
+		method.addBody("self = genderDto");
+
+		methods.add(method);
+	}
+
+
+	private void createMarshalling()
+	{
+
+		SwiftMethod method = SwiftMarshallingHelper.createMarshallingMethod();
+		method.addBody("return self.rawValue");
+		methods.add(method);
 	}
 }

@@ -1,12 +1,15 @@
 package com.misternerd.resteasytox.swift.objects;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.misternerd.resteasytox.swift.helper.BuildableHelper;
+import com.misternerd.resteasytox.swift.helper.SwiftMarshallingHelper;
 
 public class SwiftClass extends Buildable
 {
 	private final String superClass;
+
 	private final String name;
 
 	private final ArrayList<SwiftProperty> properties = new ArrayList<>();
@@ -22,6 +25,8 @@ public class SwiftClass extends Buildable
 	private boolean includeMarshalling = false;
 
 	private boolean includeUnmarshalling = false;
+
+	private boolean overrideProtocols = false;
 
 
 	public SwiftClass(String name, String superClass)
@@ -82,11 +87,19 @@ public class SwiftClass extends Buildable
 	}
 
 
+	/**
+	 * Defaults to false
+	 */
+	public void setOverrideProtocols(boolean overrideProtocols)
+	{
+		this.overrideProtocols = overrideProtocols;
+	}
+
+
 	@Override
 	public void build(StringBuilder sb)
 	{
 		int indent = 0;
-		buildImports(sb);
 
 		buildFileHeader(sb);
 
@@ -101,12 +114,12 @@ public class SwiftClass extends Buildable
 
 		if (includeUnmarshalling)
 		{
-			buildUnmarshalling(sb, indent);
+			createUnmarshalling();
 		}
 
 		if (includeMarshalling)
 		{
-			buildMarshalling(sb, indent);
+			createMarshalling();
 		}
 
 		buildMethods(sb, indent);
@@ -116,20 +129,46 @@ public class SwiftClass extends Buildable
 	}
 
 
-	private void buildImports(StringBuilder sb)
-	{
-
-	}
-
-
 	private void buildFileHeader(StringBuilder sb)
 	{
 		BuildableHelper.addSpace(sb);
 		sb.append("class ").append(name);
 
-		if (superClass != null)
+		if (superClass != null || includeMarshalling || includeUnmarshalling)
 		{
-			sb.append(": ").append(superClass);
+
+			sb.append(": ");
+
+			boolean addComma = false;
+
+			if (superClass != null)
+			{
+				sb.append(superClass);
+				addComma = true;
+			}
+
+			if (!overrideProtocols)
+			{
+				if (includeMarshalling)
+				{
+					if (addComma)
+					{
+						sb.append(", ");
+					}
+					sb.append(SwiftMarshallingHelper.MARSHALLING_PROTOCOL);
+					addComma = true;
+				}
+
+				if (includeUnmarshalling)
+				{
+					if (addComma)
+					{
+						sb.append(", ");
+					}
+					sb.append(SwiftMarshallingHelper.UNMARSHALLING_PROTOCOL);
+					addComma = true;
+				}
+			}
 		}
 
 		sb.append(" {");
@@ -138,102 +177,96 @@ public class SwiftClass extends Buildable
 
 	private void buildConstructor(StringBuilder sb, int indent)
 	{
-		SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties, superProperties, (superClass != null));
-		constructor.buildNewline(sb, indent);
+		if (!properties.isEmpty())
+		{
+			BuildableHelper.addNewline(sb);
+			SwiftConstructorMethod constructor = new SwiftConstructorMethod(properties, superProperties, (superClass != null));
+			constructor.buildNewline(sb, indent);
+		}
 	}
 
 
-	private void buildUnmarshalling(StringBuilder sb, int indent)
+	private void createUnmarshalling()
 	{
-		BuildableHelper.addSpace(sb);
-		BuildableHelper.addIndent(sb, indent);
-		sb.append("required init(data: [String: AnyObject]) {");
+		SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethod();
+		method.setConvenience(true);
+		method.setRequired(true);
 
-		indent++;
-		for (SwiftProperty property : properties)
+		method.addBody("guard let json = json where (json as? [String: AnyObject] != nil) else {");
+		method.addBody("\treturn nil");
+		method.addBody("}");
+
+		List<SwiftProperty> allProperties = getAllProperties();
+		for (SwiftProperty property : allProperties)
 		{
-			BuildableHelper.addNewline(sb);
-			BuildableHelper.addIndent(sb, indent);
-			sb.append(property.getName()).append(" <-- data[\"").append(property.getName()).append("\"]");
+			method.addBody(property.lineForUnmarshalling());
 		}
 
-		if (superClass != null)
+		method.addBody("if let");
+
+		List<SwiftProperty> nonOptionalProperties = getAllNonOptionalProperties();
+		for (SwiftProperty property : nonOptionalProperties)
 		{
-			BuildableHelper.addNewline(sb);
-			BuildableHelper.addIndent(sb, indent);
-			sb.append("super.init(data: data)");
+			String newLine = String.format("\t%s = %s", property.getName(), property.getName());
+			if (nonOptionalProperties.indexOf(property) < nonOptionalProperties.size() - 1)
+			{
+				newLine += ",";
+			}
+			method.addBody(newLine);
 		}
 
-		indent--;
-		BuildableHelper.addNewline(sb);
-		BuildableHelper.addIndent(sb, indent);
-		sb.append("}");
+		method.addBody("{");
+
+		method.addBody("\tself.init(");
+
+		for (SwiftProperty property : allProperties)
+		{
+			String newLine = String.format("\t\t%s: %s", property.getName(), property.getName());
+			if (allProperties.indexOf(property) < allProperties.size() - 1)
+			{
+				newLine += ",";
+			}
+			else
+			{
+				newLine += ")";
+			}
+			method.addBody(newLine);
+		}
+
+		method.addBody("} else {");
+		method.addBody("\treturn nil");
+		method.addBody("}");
+
+		methods.add(method);
 	}
 
 
-	private void buildMarshalling(StringBuilder sb, int indent)
+	private void createMarshalling()
 	{
-		BuildableHelper.addSpace(sb);
-		BuildableHelper.addIndent(sb, indent);
 
-		if (superClass != null)
+		SwiftMethod method = SwiftMarshallingHelper.createMarshallingMethod();
+		method.setOverride(overrideProtocols);
+
+		method.addBody("var jsonParameter: [String: AnyObject] = [:]");
+
+		List<SwiftProperty> allProperties = getAllProperties();
+		for (SwiftProperty property : allProperties)
 		{
-			sb.append("override ");
-		}
-		sb.append("func parameters(parameters: [String: AnyObject] = [:]) -> [String: AnyObject] {");
-
-		indent++;
-
-		if (superClass != null)
-		{
-			BuildableHelper.addNewline(sb);
-			BuildableHelper.addIndent(sb, indent);
-			sb.append("var parameters = super.parameters(parameters)");
+			method.addBody(property.lineForMarshalling());
 		}
 
-		for (SwiftProperty property : properties)
-		{
-			if (property.isOptional())
-			{
-				BuildableHelper.addNewline(sb);
-				BuildableHelper.addIndent(sb, indent);
-				sb.append("if let ").append(property.getName()).append(" = ").append(property.getName()).append(" {");
-				indent++;
-			}
-			BuildableHelper.addNewline(sb);
-			BuildableHelper.addIndent(sb, indent);
-			sb.append("parameters[\"").append(property.getName()).append("\"] = ").append(property.getName());
+		method.addBody("return jsonParameter");
 
-			if (property.isOptional())
-			{
-				indent--;
-				BuildableHelper.addNewline(sb);
-				BuildableHelper.addIndent(sb, indent);
-				sb.append("}");
-			}
-		}
-
-		BuildableHelper.addNewline(sb);
-		BuildableHelper.addIndent(sb, indent);
-		sb.append("return parameters");
-
-		indent--;
-		BuildableHelper.addNewline(sb);
-		BuildableHelper.addIndent(sb, indent);
-		sb.append("}");
+		methods.add(method);
 	}
 
 
 	private void buildMethods(StringBuilder sb, int indent)
 	{
-		if (!methods.isEmpty())
+		for (SwiftMethod method : methods)
 		{
 			BuildableHelper.addNewline(sb);
-
-			for (SwiftMethod method : methods)
-			{
-				method.buildNewline(sb, indent);
-			}
+			method.buildNewline(sb, indent);
 		}
 	}
 
@@ -270,5 +303,46 @@ public class SwiftClass extends Buildable
 	{
 		BuildableHelper.addNewline(sb);
 		sb.append("}");
+	}
+
+
+	/**
+	 * Includes super properties
+	 */
+	private List<SwiftProperty> getAllNonOptionalProperties()
+	{
+		ArrayList<SwiftProperty> allProperties = new ArrayList<>();
+
+		for (SwiftProperty swiftProperty : superProperties)
+		{
+			if (!swiftProperty.isOptional())
+			{
+				allProperties.add(swiftProperty);
+			}
+		}
+
+		for (SwiftProperty swiftProperty : properties)
+		{
+			if (!swiftProperty.isOptional())
+			{
+				allProperties.add(swiftProperty);
+			}
+		}
+
+		return allProperties;
+	}
+
+
+	/**
+	 * Includes super properties
+	 */
+	private List<SwiftProperty> getAllProperties()
+	{
+		ArrayList<SwiftProperty> allProperties = new ArrayList<>();
+
+		allProperties.addAll(superProperties);
+		allProperties.addAll(properties);
+
+		return allProperties;
 	}
 }

@@ -23,6 +23,11 @@ public class SwiftServiceMethod extends SwiftMethod
 	@Override
 	public void build(StringBuilder sb, int indent)
 	{
+		if (serviceMethod.bodyParam != null) {
+			SwiftProperty request = new SwiftProperty(false, false, SwiftTypeHelper.getSwiftTypeFromClass(serviceMethod.bodyParam.type), "request", false, null);
+			addParameter(request);
+		}
+		
 		// We need to generate parameter and body before the method is build.
 		for (MethodParameter parameter : serviceMethod.pathParams)
 		{
@@ -42,7 +47,7 @@ public class SwiftServiceMethod extends SwiftMethod
 		}
 
 		String path = replacePathParams(serviceMethod.path, serviceMethod.pathParams);
-		String parameters = serviceMethod.bodyParam == null ? "nil" : "request.parameters()";
+		String parameters = serviceMethod.bodyParam == null ? "nil" : "request.parameter()";
 		addBody("manager");
 		addBody("\t.request(.%s, baseUrl + \"%s\", parameters: %s, encoding: .JSON)", serviceMethod.httpMethod, path, parameters);
 		addBody("\t.responseObject { (response: " + SwiftTypeHelper.getSwiftTypeFromClass(serviceMethod.returnType).getName() + "?, error) -> Void in ", serviceMethod.bodyParam);

@@ -44,6 +44,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 		}
 
 		generateHelper();
+		generateBaseClasses();
 		generateDtos();
 		generateRequestObjects();
 		generateResponseObjects();
@@ -70,11 +71,21 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 			SwiftEnum swiftEnum = mayGeneratePlainEnum(cls, name);
 
-			if (swiftEnum == null)
+			if (swiftEnum != null)
+			{
+				swiftFile.addEnum(swiftEnum);
+			}
+			else
 			{
 				String superClass = getSuperClassName(cls);
 
 				SwiftClass swiftClass = new SwiftClass(name, superClass);
+				
+				if (layout.getDtoClasses().contains(cls.getSuperclass()))
+				{
+					// Superclass is also a dto and will include the needed protocols
+					swiftClass.setOverrideProtocols(true);
+				}
 
 				List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
 				writeProperties(swiftClass, fields);
@@ -85,8 +96,6 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 				swiftClass.setIncludeConstructor(true);
 				swiftClass.setIncludeMarshalling(generateAlamofireServices);
 				swiftClass.setIncludeUnmarshalling(generateAlamofireServices);
-
-				// TODO: Integrate generation from and to json object
 
 				swiftFile.addClass(swiftClass);
 			}
@@ -126,6 +135,43 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	}
 
 
+	private void generateBaseClasses() throws Exception
+	{
+		for (Class<?> cls : layout.getBaseClasses())
+		{
+
+			Path classPath = getOutputPathFromJavaPackage(cls);
+
+			String name = cls.getSimpleName();
+
+			// A DTO may just be a plain enum, so we don't have to create a
+			// class in this case.
+			SwiftFile swiftFile = new SwiftFile(classPath, name);
+
+			SwiftEnum swiftEnum = mayGeneratePlainEnum(cls, name);
+
+			if (swiftEnum == null)
+			{
+				String superClass = getSuperClassName(cls);
+
+				SwiftClass swiftClass = new SwiftClass(name, superClass);
+
+				List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
+				writeProperties(swiftClass, fields);
+
+				List<Field> superProperties = getMemberVariablesOfAllSuperclasses(cls);
+				writePropertiesOfSuper(swiftClass, superProperties);
+
+				swiftClass.setIncludeConstructor(true);
+
+				swiftFile.addClass(swiftClass);
+			}
+
+			swiftFile.writeToFile();
+		}
+	}
+
+
 	private void generateResponseObjects() throws Exception
 	{
 		for (Class<?> cls : layout.getResponseClasses())
@@ -148,7 +194,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			writeConstants(swiftClass, constants);
 
 			swiftClass.setIncludeConstructor(true);
-			swiftClass.setIncludeMarshalling(generateAlamofireServices);
+			swiftClass.setIncludeUnmarshalling(generateAlamofireServices);
 
 			swiftFile.writeToFile();
 
@@ -166,7 +212,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			Path filePath = FileHelper.getOrCreateFilePath(outputPath, "service", serviceClass.name, FileHelper.FILE_EXTENSION_SWIFT);
 
 			SwiftFile swiftFile = new SwiftFile(filePath, serviceClass.name);
-			SwiftClass swiftClass = new SwiftClass(serviceClass.name, null);
+			SwiftClass swiftClass = new SwiftClass(serviceClass.name, "AbstractService");
 			swiftFile.addClass(swiftClass);
 
 			for (ServiceMethod method : serviceClass.methods)
@@ -183,6 +229,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 	private void generateHelper() throws IOException
 	{
 		SwiftMarshallingHelper.generateMarshallingHelper(outputPath);
+
 	}
 
 
@@ -303,6 +350,9 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 		{
 			swiftEnum.addEnumItem(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
 		}
+		
+		swiftEnum.setIncludeMarshalling(generateAlamofireServices);
+		swiftEnum.setIncludeUnmarshalling(generateAlamofireServices);
 
 		return swiftEnum;
 	}

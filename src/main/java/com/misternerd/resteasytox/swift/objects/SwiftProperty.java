@@ -45,8 +45,68 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 	}
 
 
+	public String lineForUnmarshalling()
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("let ").append(name);
+		
+		
+		if (type.isArray()) {
+			sb.append(": ");
+			type.build(sb);
+			sb.append("? = ");
+			
+			// We need special handling for data and date, because they don't implement Unmarshalling protocol
+			if (type.getName().equals(SwiftType.NSDATA) ||
+					type.getName().equals(SwiftType.NSDATE)) {
+				sb.append(type.getName()).append(".arrayFromJson(json[\"").append(getName()).append("\"])");
+			} else {
+				sb.append("arrayFromJson(json[\"").append(getName()).append("\"])");
+			}
+		} else {
+			sb.append(" = ").append(type.getName()).append("(json: json[\"").append(getName()).append("\"])");
+		}
+		
+		
+		return sb.toString();
+	}
+
+
+	public String lineForMarshalling()
+	{
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("jsonParameter[\"").append(name).append("\"] = ").append(getName());
+		
+		if (isOptional) {
+			sb.append("?");
+		}
+		
+		if (type.isArray()) {
+			sb.append(".map{$0");
+		}
+		
+		sb.append(".toJson()");
+		
+		if (type.isArray()) {
+			sb.append("}");
+		}
+		
+		if (isOptional) {
+			sb.append(" ?? NSNull()");
+		}
+		
+		return sb.toString();
+	}
+	
+	public void buildParameter(StringBuilder sb) {
+		sb.append(name).append(": ").append(name);
+	}
+
+
 	@Override
-	public void buildParameter(StringBuilder sb)
+	public void buildParameterDeclaration(StringBuilder sb)
 	{
 		if (isFinal)
 		{

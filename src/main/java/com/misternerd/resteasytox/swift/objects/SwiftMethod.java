@@ -22,6 +22,9 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 	private boolean isDefinition = false;
 
 	private boolean isOptional = false;
+	private boolean isConvenience = false;
+	private boolean isRequired = false;
+	private boolean isOverride = false;
 
 
 	public SwiftMethod(String name)
@@ -71,9 +74,27 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 	}
 
 
+	public void setConvenience(boolean isConvenience)
+	{
+		this.isConvenience = isConvenience;
+	}
+
+
+	public void setRequired(boolean isRequired)
+	{
+		this.isRequired = isRequired;
+	}
+
+
 	public void setStatic(boolean isStatic)
 	{
 		this.isStatic = isStatic;
+	}
+
+
+	public void setOverride(boolean isOverride)
+	{
+		this.isOverride = isOverride;
 	}
 
 
@@ -83,14 +104,29 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 
 		if (INIT_FUNCTION_NAME.equals(name))
 		{
+			if (isConvenience)
+			{
+				sb.append("convenience ");
+			}
+			if (isRequired)
+			{
+				sb.append("required ");
+			}
 			sb.append(INIT_FUNCTION_NAME);
+
 		}
 		else
 		{
+			if (isOverride)
+			{
+				sb.append("override ");
+			}
+
 			if (isStatic)
 			{
 				sb.append("static ");
 			}
+
 			sb.append("func ").append(name);
 		}
 
@@ -134,7 +170,7 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 		for (int i = 0; i < parameters.size(); i++)
 		{
 			ParameterBuildable parameter = parameters.get(i);
-			parameter.buildParameter(sb);
+			parameter.buildParameterDeclaration(sb);
 
 			if (i < parameters.size() - 1)
 			{
@@ -147,7 +183,7 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 	@Override
 	public void buildNewline(StringBuilder sb, int indent)
 	{
-		BuildableHelper.addSpace(sb);
+		BuildableHelper.addNewline(sb);
 
 		build(sb, indent);
 	}
@@ -161,11 +197,18 @@ public class SwiftMethod extends Buildable implements ParameterBuildable
 
 
 	@Override
-	public void buildParameter(StringBuilder sb)
+	public void buildParameterDeclaration(StringBuilder sb)
 	{
 		sb.append(name).append(": (");
 		addParameters(sb);
 		sb.append(") -> ").append(returnType);
+	}
+
+
+	@Override
+	public String toString()
+	{
+		return "SwiftMethod(name=" + name + ", returnType=" + returnType + ")";
 	}
 
 }
