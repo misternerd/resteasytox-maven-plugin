@@ -26,13 +26,16 @@ public class SwiftClass extends Buildable
 
 	private boolean includeUnmarshalling = false;
 
+	private boolean supportObjC = false;
+
 	private boolean overrideProtocols = false;
 
 
-	public SwiftClass(String name, String superClass)
+	public SwiftClass(String name, String superClass, boolean supportObjC)
 	{
 		this.name = name;
 		this.superClass = superClass;
+		this.supportObjC = supportObjC;
 	}
 
 
@@ -96,6 +99,15 @@ public class SwiftClass extends Buildable
 	}
 
 
+	/**
+	 * Defaults to false
+	 */
+	public void setSupportObjC(boolean supportObjC)
+	{
+		this.supportObjC = supportObjC;
+	}
+
+
 	@Override
 	public void build(StringBuilder sb)
 	{
@@ -134,7 +146,7 @@ public class SwiftClass extends Buildable
 		BuildableHelper.addSpace(sb);
 		sb.append("class ").append(name);
 
-		if (superClass != null || includeMarshalling || includeUnmarshalling)
+		if (superClass != null || supportObjC || includeMarshalling || includeUnmarshalling)
 		{
 
 			sb.append(": ");
@@ -144,6 +156,11 @@ public class SwiftClass extends Buildable
 			if (superClass != null)
 			{
 				sb.append(superClass);
+				addComma = true;
+			}
+			else if (supportObjC)
+			{
+				sb.append("NSObject");
 				addComma = true;
 			}
 

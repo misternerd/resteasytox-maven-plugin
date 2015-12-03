@@ -26,12 +26,14 @@ import com.misternerd.resteasytox.swift.objects.SwiftServiceMethod;
 public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 {
 	private boolean generateAlamofireServices;
+	private boolean supportObjC;
 
 
-	public ResteasyToSwiftConverter(Path outputPath, String javaPackageName, RestServiceLayout layout, boolean generateAlamofireServices)
+	public ResteasyToSwiftConverter(Path outputPath, String javaPackageName, RestServiceLayout layout, boolean generateAlamofireServices, boolean supportObjC)
 	{
 		super(outputPath, javaPackageName, layout);
 		this.generateAlamofireServices = generateAlamofireServices;
+		this.supportObjC = supportObjC;
 	}
 
 
@@ -79,11 +81,12 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			{
 				String superClass = getSuperClassName(cls);
 
-				SwiftClass swiftClass = new SwiftClass(name, superClass);
-				
+				SwiftClass swiftClass = new SwiftClass(name, superClass, supportObjC);
+
 				if (layout.getDtoClasses().contains(cls.getSuperclass()))
 				{
-					// Superclass is also a dto and will include the needed protocols
+					// Superclass is also a dto and will include the needed
+					// protocols
 					swiftClass.setOverrideProtocols(true);
 				}
 
@@ -114,7 +117,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			String superClass = getSuperClassName(cls);
 
 			SwiftFile swiftFile = new SwiftFile(classPath, name);
-			SwiftClass swiftClass = new SwiftClass(name, superClass);
+			SwiftClass swiftClass = new SwiftClass(name, superClass, supportObjC);
 			swiftFile.addClass(swiftClass);
 
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
@@ -154,7 +157,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			{
 				String superClass = getSuperClassName(cls);
 
-				SwiftClass swiftClass = new SwiftClass(name, superClass);
+				SwiftClass swiftClass = new SwiftClass(name, superClass, supportObjC);
 
 				List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
 				writeProperties(swiftClass, fields);
@@ -181,7 +184,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			String superClass = getSuperClassName(cls);
 
 			SwiftFile swiftFile = new SwiftFile(classPath, name);
-			SwiftClass swiftClass = new SwiftClass(name, superClass);
+			SwiftClass swiftClass = new SwiftClass(name, superClass, supportObjC);
 			swiftFile.addClass(swiftClass);
 
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
@@ -212,7 +215,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			Path filePath = FileHelper.getOrCreateFilePath(outputPath, "service", serviceClass.name, FileHelper.FILE_EXTENSION_SWIFT);
 
 			SwiftFile swiftFile = new SwiftFile(filePath, serviceClass.name);
-			SwiftClass swiftClass = new SwiftClass(serviceClass.name, "AbstractService");
+			SwiftClass swiftClass = new SwiftClass(serviceClass.name, "AbstractService", supportObjC);
 			swiftFile.addClass(swiftClass);
 
 			for (ServiceMethod method : serviceClass.methods)
@@ -350,7 +353,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 		{
 			swiftEnum.addEnumItem(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
 		}
-		
+
 		swiftEnum.setIncludeMarshalling(generateAlamofireServices);
 		swiftEnum.setIncludeUnmarshalling(generateAlamofireServices);
 
