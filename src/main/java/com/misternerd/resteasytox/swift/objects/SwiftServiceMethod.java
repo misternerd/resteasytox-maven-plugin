@@ -49,11 +49,8 @@ public class SwiftServiceMethod extends SwiftMethod
 		String path = replacePathParams(serviceMethod.path, serviceMethod.pathParams);
 		String parameters = serviceMethod.bodyParam == null ? "nil" : "request.parameter()";
 		addBody("manager");
-		addBody("\t.request(.%s, baseUrl + \"%s\", parameters: %s, encoding: .JSON)", serviceMethod.httpMethod, path, parameters);
-		addBody("\t.responseObject { (response: " + SwiftTypeHelper.getSwiftTypeFromClass(serviceMethod.returnType).getName() + "?, error) -> Void in ", serviceMethod.bodyParam);
-		addBody("\t\tself.checkResponse(response)");
-		addBody("\t\tcallback(response: response, error: error)");
-		addBody("\t}");
+		addBody("\t.request(.%s, baseUrl + servicePath + \"%s\", parameters: %s, encoding: .JSON)", serviceMethod.httpMethod, path, parameters);
+		addBody("\t.responseObject(callback)"); //TODO: handle serviceMethod.returnType == null for this case. 
 
 		super.build(sb, indent);
 	}

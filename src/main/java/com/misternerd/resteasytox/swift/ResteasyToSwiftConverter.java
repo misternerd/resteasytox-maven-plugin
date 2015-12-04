@@ -165,6 +165,9 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 				List<Field> superProperties = getMemberVariablesOfAllSuperclasses(cls);
 				writePropertiesOfSuper(swiftClass, superProperties);
 
+				List<Field> constants = getPublicClassConstants(cls);
+				writeConstants(swiftClass, constants);
+
 				swiftClass.setIncludeConstructor(true);
 
 				swiftFile.addClass(swiftClass);
@@ -217,6 +220,9 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			SwiftFile swiftFile = new SwiftFile(filePath, serviceClass.name);
 			SwiftClass swiftClass = new SwiftClass(serviceClass.name, "AbstractService", supportObjC);
 			swiftFile.addClass(swiftClass);
+
+			SwiftProperty property = new SwiftProperty(true, true, SwiftTypeHelper.getSwiftTypeFromClass(serviceClass.path.getClass()), "servicePath", false, "\"" + serviceClass.path + "\"");
+			swiftClass.addConstant(property);
 
 			for (ServiceMethod method : serviceClass.methods)
 			{
