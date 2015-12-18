@@ -120,6 +120,13 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			SwiftClass swiftClass = new SwiftClass(name, superClass, supportObjC);
 			swiftFile.addClass(swiftClass);
 
+			if (layout.getRequestClasses().contains(cls.getSuperclass()))
+			{
+				// Superclass is also a request and will include the needed
+				// protocols
+				swiftClass.setOverrideProtocols(true);
+			}
+
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
 			writeProperties(swiftClass, fields);
 
@@ -189,6 +196,14 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			SwiftFile swiftFile = new SwiftFile(classPath, name);
 			SwiftClass swiftClass = new SwiftClass(name, superClass, supportObjC);
 			swiftFile.addClass(swiftClass);
+			
+
+			if (layout.getResponseClasses().contains(cls.getSuperclass()))
+			{
+				// Superclass is also a response and will include the needed
+				// protocols
+				swiftClass.setOverrideProtocols(true);
+			}
 
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
 			writeProperties(swiftClass, fields);

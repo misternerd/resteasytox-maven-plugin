@@ -132,14 +132,14 @@ public class SwiftEnum extends Buildable
 	{
 		SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethod();
 
-		method.addBody("guard let genderString = json as? String else {");
+		method.addBody("guard let enumString = json as? String else {");
 		method.addBody("\treturn nil");
 		method.addBody("}");
-		method.addBody("guard let genderDto = GenderDto(rawValue: genderString) else {");
+		method.addBody("guard let enumDto = " + name + "(rawValue: enumString) else {");
 		method.addBody("\treturn nil");
 		method.addBody("}");
 
-		method.addBody("self = genderDto");
+		method.addBody("self = enumDto");
 
 		methods.add(method);
 	}

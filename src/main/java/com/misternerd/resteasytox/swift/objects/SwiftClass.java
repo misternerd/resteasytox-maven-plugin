@@ -219,21 +219,25 @@ public class SwiftClass extends Buildable
 			method.addBody(property.lineForUnmarshalling());
 		}
 
-		method.addBody("if let");
-
 		List<SwiftProperty> nonOptionalProperties = getAllNonOptionalProperties();
-		for (SwiftProperty property : nonOptionalProperties)
+		if (!nonOptionalProperties.isEmpty())
 		{
-			String newLine = String.format("\t%s = %s", property.getName(), property.getName());
-			if (nonOptionalProperties.indexOf(property) < nonOptionalProperties.size() - 1)
+			method.addBody("if let");
+
+			for (SwiftProperty property : nonOptionalProperties)
 			{
-				newLine += ",";
+				String newLine = String.format("\t%s = %s", property.getName(), property.getName());
+				if (nonOptionalProperties.indexOf(property) < nonOptionalProperties.size() - 1)
+				{
+					newLine += ",";
+				}
+				method.addBody(newLine);
 			}
-			method.addBody(newLine);
+
+			method.addBody("{");
 		}
 
-		method.addBody("{");
-
+		//TODO: No indentation if nonOptionalProperties.isEmpty()
 		method.addBody("\tself.init(");
 
 		for (SwiftProperty property : allProperties)
@@ -250,11 +254,15 @@ public class SwiftClass extends Buildable
 			method.addBody(newLine);
 		}
 
-		method.addBody("} else {");
-		method.addBody("\treturn nil");
-		method.addBody("}");
+		if (!nonOptionalProperties.isEmpty())
+		{
+			method.addBody("} else {");
+			method.addBody("\treturn nil");
+			method.addBody("}");
+		}
 
 		methods.add(method);
+
 	}
 
 
