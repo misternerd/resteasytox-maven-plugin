@@ -26,6 +26,9 @@ import com.misternerd.resteasytox.base.MethodParameterComparator;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
 import com.misternerd.resteasytox.base.ServiceMethod.RequestMethod;
+import com.misternerd.resteasytox.base.ServiceMethodComparator;
+
+import edu.emory.mathcs.backport.java.util.Collections;
 
 /**
  * This class reads in all the relevant data via reflections and provides
@@ -142,6 +145,8 @@ public class RestServiceLayout
 				methods.add(new ServiceMethod(method.getName(), path, requestMethod, requestContentType,
 						responseContentType, headerParams, pathParams, bodyParam, returnType));
 			}
+
+			Collections.sort(methods, new ServiceMethodComparator());
 
 			if (!methods.isEmpty())
 			{
@@ -364,19 +369,19 @@ public class RestServiceLayout
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("Generated REST layout is as follows:\nBASE CLASSES\n============");
-		baseClasses.stream().forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
+		baseClasses.forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
 
 		sb.append("\n\nSERVICE CLASSES\n===============");
-		serviceClasses.stream().forEach( cls -> sb.append("\n\t").append(cls.name));
+		serviceClasses.forEach( cls -> sb.append("\n\t").append(cls.name));
 
 		sb.append("\n\nREQUEST CLASSES\n===============");
-		requestClasses.stream().forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
+		requestClasses.forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
 
 		sb.append("\n\nRESPONSE CLASSES\n================");
-		responseClasses.stream().forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
+		responseClasses.forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
 
 		sb.append("\n\nDTO CLASSES\n===========");
-		dtoClasses.stream().forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
+		dtoClasses.forEach( cls -> sb.append("\n\t").append(cls.getSimpleName()));
 
 		logger.info(sb.append("\n\n").toString());
 	}

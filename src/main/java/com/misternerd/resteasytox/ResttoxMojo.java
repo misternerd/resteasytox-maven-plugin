@@ -34,7 +34,7 @@ public class ResttoxMojo extends AbstractMojo
 
 	@Parameter(property = "javaPackageName", required = true)
 	private String javaPackageName;
-	
+
 	@Parameter(property = "printLayout", defaultValue = "false", required = false)
 	private boolean printLayout;
 

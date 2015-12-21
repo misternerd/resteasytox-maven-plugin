@@ -1,0 +1,23 @@
+{
+    "name": "misternerd/resteasytoxclient",
+    "description": "Auto-generated REST client for a JAX-RS project",
+    "homepage": "https://github.com/misternerd/resteasytox-maven-plugin",
+    "license": "Apache License, Version 2.0",
+    "keywords": ["rest", "java", "client"],
+    "version": "1",
+    "authors": [
+        {
+            "name": "Jan Jurgens",
+            "email": "me@misternerd.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3",
+        "nategood/httpful": ">=0.2.19"
+    },
+    "autoload": {
+        "psr-0": {
+            "##NAMESPACE##": "src/"
+        }
+    }
+}
