@@ -198,7 +198,7 @@ public class SwiftMarshallingHelper
 
 		SwiftMethod marshallingMethod = createMarshallingMethod();
 
-		marshallingMethod.addBody("return self.timeIntervalSince1970 * 1000 // unix to java");
+		marshallingMethod.addBody("return Int(self.timeIntervalSince1970 * 1000) // unix to java");
 
 		extension.addMethod(marshallingMethod);
 

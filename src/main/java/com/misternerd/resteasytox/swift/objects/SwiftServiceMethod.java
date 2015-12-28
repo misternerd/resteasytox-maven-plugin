@@ -58,12 +58,11 @@ public class SwiftServiceMethod extends SwiftMethod
 
 	private String replacePathParams(String path, Set<MethodParameter> pathParams)
 	{
-		String newPath = path;
 		for (MethodParameter methodParameter : pathParams)
 		{
-			newPath = path.replace("{" + methodParameter.name + "}", "\\(" + methodParameter.name + ")");
+			path = path.replace("{" + methodParameter.name + "}", "\\(" + methodParameter.name + ")");
 		}
-		return newPath;
+		return path;
 	}
 
 }
