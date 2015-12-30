@@ -17,13 +17,7 @@ import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
 import com.misternerd.resteasytox.base.ServiceMethod.RequestMethod;
 import com.misternerd.resteasytox.javascript.helper.RestClient;
-import com.misternerd.resteasytox.javascript.objects.InitFromJsonMethod;
-import com.misternerd.resteasytox.javascript.objects.InitMembersMethod;
-import com.misternerd.resteasytox.javascript.objects.JavascriptClass;
-import com.misternerd.resteasytox.javascript.objects.JavascriptMethod;
-import com.misternerd.resteasytox.javascript.objects.JavascriptParameter;
-import com.misternerd.resteasytox.javascript.objects.JavascriptPublicMember;
-import com.misternerd.resteasytox.javascript.objects.ToJsonMethod;
+import com.misternerd.resteasytox.javascript.objects.*;
 
 
 public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
@@ -136,7 +130,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		jsClass.addMethod(new InitMembersMethod(jsClass));
 		jsClass.addMethod("initFromJson")
 			.addParameter(new JavascriptParameter("jsonData"))
-			.addBody("value = jsonData;")
+			.addBody("self.value = jsonData;")
 			.addBody("return self;");
 		jsClass.addMethod("toJson")
 			.addParameter(new JavascriptParameter("dontEncode"))
@@ -244,18 +238,32 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			method.addBody("var bodyData = null;");
 		}
 
+		String returnType = "{}";
+
+		if(serviceMethod.returnType != null)
+		{
+			if(serviceMethod.returnType.isArray())
+			{
+				returnType = "[]";
+			}
+			else if(layout.getResponseClasses().contains(serviceMethod.returnType))
+			{
+				returnType = "new " + serviceMethod.returnType.getSimpleName() + "()";
+			}
+		}
+
 		if(RequestMethod.POST.equals(serviceMethod.httpMethod))
 		{
 			method.addBody("var request = restClient.postRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
 					serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType,
-					(serviceMethod.returnType != null) ? "new " + serviceMethod.returnType.getSimpleName() + "()" : null);
+					returnType);
 			method.addBody("return request;");
 		}
 		else
 		{
 			method.addBody("var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, '%s', '%s', %s);",
 					serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType,
-					(serviceMethod.returnType != null) ? "new " + serviceMethod.returnType.getSimpleName() + "()" : null);
+					returnType);
 			method.addBody("return request;");
 		}
 
