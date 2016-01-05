@@ -59,11 +59,12 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, true);
 
 			writePublicClassConstants(cls, jsClass);
+			writePrivateAndProtectedFields(jsClass, fields);
 			jsClass.addMemberInitMethod();
 			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
-			writePrivateAndProtectedFields(jsClass, fields);
-			writePublicGettersAndSetters(jsClass, fields);
+			jsClass.addMethod(new InitFromDataMethod(jsClass));
 			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
+			writePublicGettersAndSetters(jsClass, fields);
 
 			jsClass.writeToFile();
 		}
@@ -78,9 +79,10 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, true);
 
 			writePublicClassConstants(cls, jsClass);
+			writePrivateAndProtectedFields(jsClass, fields);
 			jsClass.addMemberInitMethod();
 			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
-			writePrivateAndProtectedFields(jsClass, fields);
+			jsClass.addMethod(new InitFromDataMethod(jsClass));
 			writePublicGettersAndSetters(jsClass, fields);
 			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
 
@@ -107,6 +109,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 				writePrivateAndProtectedFields(jsClass, fields);
 				jsClass.addMemberInitMethod();
 				jsClass.addMethod(new InitFromJsonMethod(fields, layout));
+				jsClass.addMethod(new InitFromDataMethod(jsClass));
 				writePublicGettersAndSetters(jsClass, fields);
 				jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
 			}
