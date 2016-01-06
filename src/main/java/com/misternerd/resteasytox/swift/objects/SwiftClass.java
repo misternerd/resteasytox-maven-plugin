@@ -2,6 +2,8 @@ package com.misternerd.resteasytox.swift.objects;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import com.misternerd.resteasytox.swift.helper.BuildableHelper;
 import com.misternerd.resteasytox.swift.helper.SwiftMarshallingHelper;
@@ -99,15 +101,6 @@ public class SwiftClass extends Buildable
 	}
 
 
-	/**
-	 * Defaults to false
-	 */
-	public void setSupportObjC(boolean supportObjC)
-	{
-		this.supportObjC = supportObjC;
-	}
-
-
 	@Override
 	public void build(StringBuilder sb)
 	{
@@ -136,7 +129,7 @@ public class SwiftClass extends Buildable
 
 		buildMethods(sb, indent);
 
-		indent--;
+//		indent--;
 		buildClassFooter(sb);
 	}
 
@@ -151,41 +144,31 @@ public class SwiftClass extends Buildable
 
 			sb.append(": ");
 
-			boolean addComma = false;
+			StringJoiner joiner = new StringJoiner(", ");
 
 			if (superClass != null)
 			{
-				sb.append(superClass);
-				addComma = true;
+				joiner.add(superClass);
 			}
 			else if (supportObjC)
 			{
-				sb.append("NSObject");
-				addComma = true;
+				joiner.add("NSObject");
 			}
 
 			if (!overrideProtocols)
 			{
 				if (includeMarshalling)
 				{
-					if (addComma)
-					{
-						sb.append(", ");
-					}
-					sb.append(SwiftMarshallingHelper.MARSHALLING_PROTOCOL);
-					addComma = true;
+					joiner.add(SwiftMarshallingHelper.MARSHALLING_PROTOCOL);
 				}
 
 				if (includeUnmarshalling)
 				{
-					if (addComma)
-					{
-						sb.append(", ");
-					}
-					sb.append(SwiftMarshallingHelper.UNMARSHALLING_PROTOCOL);
-					addComma = true;
+					joiner.add(SwiftMarshallingHelper.UNMARSHALLING_PROTOCOL);
 				}
 			}
+
+			sb.append(joiner.toString());
 		}
 
 		sb.append(" {");
@@ -209,7 +192,7 @@ public class SwiftClass extends Buildable
 		method.setConvenience(true);
 		method.setRequired(true);
 
-		method.addBody("guard let json = json where (json as? [String: AnyObject] != nil) else {");
+		method.addBody("guard let json = json as? [String: AnyObject] else {");
 		method.addBody("\treturn nil");
 		method.addBody("}");
 
@@ -336,23 +319,9 @@ public class SwiftClass extends Buildable
 	 */
 	private List<SwiftProperty> getAllNonOptionalProperties()
 	{
-		ArrayList<SwiftProperty> allProperties = new ArrayList<>();
+		ArrayList<SwiftProperty> allProperties = superProperties.stream().filter(swiftProperty -> !swiftProperty.isOptional()).collect(Collectors.toCollection(ArrayList::new));
 
-		for (SwiftProperty swiftProperty : superProperties)
-		{
-			if (!swiftProperty.isOptional())
-			{
-				allProperties.add(swiftProperty);
-			}
-		}
-
-		for (SwiftProperty swiftProperty : properties)
-		{
-			if (!swiftProperty.isOptional())
-			{
-				allProperties.add(swiftProperty);
-			}
-		}
+		allProperties.addAll(properties.stream().filter(swiftProperty -> !swiftProperty.isOptional()).collect(Collectors.toList()));
 
 		return allProperties;
 	}
