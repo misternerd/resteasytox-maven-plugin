@@ -18,11 +18,14 @@ public class SwiftEnum extends Buildable
 
 	private boolean includeUnmarshalling = false;
 
+	private boolean supportObjC = false;
 
-	public SwiftEnum(String name)
+
+	public SwiftEnum(String name, boolean supportObjC)
 	{
 		super();
 		this.name = name;
+		this.supportObjC = supportObjC;
 	}
 
 
@@ -130,7 +133,7 @@ public class SwiftEnum extends Buildable
 
 	private void createUnmarshalling()
 	{
-		SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethod();
+		SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethod(supportObjC);
 
 		method.addBody("guard let enumString = json as? String else {");
 		method.addBody("\treturn nil");

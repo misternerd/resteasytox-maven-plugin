@@ -11,11 +11,14 @@ public class SwiftServiceMethod extends SwiftMethod
 
 	private final ServiceMethod serviceMethod;
 
+	private final boolean supportObjC;
 
-	public SwiftServiceMethod(ServiceMethod serviceMethod)
+
+	public SwiftServiceMethod(ServiceMethod serviceMethod, boolean supportObjC)
 	{
 		super(serviceMethod.name);
 		this.serviceMethod = serviceMethod;
+		this.supportObjC = supportObjC;
 		setStatic(true);
 	}
 
@@ -24,21 +27,21 @@ public class SwiftServiceMethod extends SwiftMethod
 	public void build(StringBuilder sb, int indent)
 	{
 		if (serviceMethod.bodyParam != null) {
-			SwiftProperty request = new SwiftProperty(false, false, SwiftTypeHelper.getSwiftTypeFromClass(serviceMethod.bodyParam.type), "request", false, null);
+			SwiftProperty request = new SwiftProperty(false, false, SwiftTypeHelper.getSwiftTypeFromClass(serviceMethod.bodyParam.type), "request", false, null, supportObjC);
 			addParameter(request);
 		}
 		
 		// We need to generate parameter and body before the method is build.
 		for (MethodParameter parameter : serviceMethod.pathParams)
 		{
-			SwiftProperty swiftParameter = new SwiftProperty(false, false, new SwiftType(SwiftType.STRING), parameter.name, false, null);
+			SwiftProperty swiftParameter = new SwiftProperty(false, false, new SwiftType(SwiftType.STRING), parameter.name, false, null, supportObjC);
 			addParameter(swiftParameter);
 		}
 
 		if (serviceMethod.returnType != null)
 		{
-			SwiftProperty response = new SwiftProperty(false, false, SwiftTypeHelper.getSwiftTypeFromClass(serviceMethod.returnType), "response", true, null);
-			SwiftProperty error = new SwiftProperty(false, false, SwiftTypeHelper.getSwiftTypeFromString("NSError"), "error", true, null);
+			SwiftProperty response = new SwiftProperty(false, false, SwiftTypeHelper.getSwiftTypeFromClass(serviceMethod.returnType), "response", true, null, supportObjC);
+			SwiftProperty error = new SwiftProperty(false, false, SwiftTypeHelper.getSwiftTypeFromString("NSError"), "error", true, null, supportObjC);
 			
 			SwiftMethod closure = new SwiftMethod("callback");
 			closure.addParameter(response);

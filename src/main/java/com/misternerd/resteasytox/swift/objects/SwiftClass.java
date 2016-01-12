@@ -188,7 +188,7 @@ public class SwiftClass extends Buildable
 
 	private void createUnmarshalling()
 	{
-		SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethod();
+		SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethod(supportObjC);
 		method.setConvenience(true);
 		method.setRequired(true);
 

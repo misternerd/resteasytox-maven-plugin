@@ -236,7 +236,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			SwiftClass swiftClass = new SwiftClass(serviceClass.name, "AbstractService", supportObjC);
 			swiftFile.addClass(swiftClass);
 
-			SwiftProperty property = new SwiftProperty(true, true, SwiftTypeHelper.getSwiftTypeFromClass(serviceClass.path.getClass()), "servicePath", false, "\"" + serviceClass.path + "\"");
+			SwiftProperty property = new SwiftProperty(true, true, SwiftTypeHelper.getSwiftTypeFromClass(serviceClass.path.getClass()), "servicePath", false, "\"" + serviceClass.path + "\"", supportObjC);
 			swiftClass.addConstant(property);
 
 			for (ServiceMethod method : serviceClass.methods)
@@ -252,7 +252,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 	private void generateHelper() throws IOException
 	{
-		SwiftMarshallingHelper.generateMarshallingHelper(outputPath);
+		SwiftMarshallingHelper.generateMarshallingHelper(outputPath, supportObjC);
 
 	}
 
@@ -311,7 +311,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
 			String defaultValue = getDefaultValue(field);
 
-			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue);
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue, supportObjC);
 			swiftClass.addProperty(property);
 		}
 	}
@@ -326,7 +326,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
 			String defaultValue = getDefaultValue(field);
 
-			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue);
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue, supportObjC);
 			swiftClass.addSuperProperty(property);
 		}
 	}
@@ -341,7 +341,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
 			String defaultValue = getDefaultValue(field);
 
-			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue);
+			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue, supportObjC);
 			swiftClass.addConstant(property);
 		}
 	}
@@ -349,7 +349,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 	private void writeServiceMethods(SwiftClass swiftClass, ServiceMethod serviceMethod)
 	{
-		SwiftServiceMethod method = new SwiftServiceMethod(serviceMethod);
+		SwiftServiceMethod method = new SwiftServiceMethod(serviceMethod, supportObjC);
 		swiftClass.addMethod(method);
 	}
 
@@ -367,7 +367,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			return null;
 		}
 
-		SwiftEnum swiftEnum = new SwiftEnum(name);
+		SwiftEnum swiftEnum = new SwiftEnum(name, supportObjC);
 
 		Class<? extends Enum> enumClass = (Class<? extends Enum>) cls;
 		for (Field field : enumerations)

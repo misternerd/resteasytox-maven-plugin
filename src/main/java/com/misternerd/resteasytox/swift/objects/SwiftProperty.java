@@ -14,8 +14,10 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 
 	private final String defaultValue;
 
+	private final boolean supportObjC;
 
-	public SwiftProperty(boolean isStatic, boolean isFinal, SwiftType type, String name, boolean isOptional, String defaultValue)
+
+	public SwiftProperty(boolean isStatic, boolean isFinal, SwiftType type, String name, boolean isOptional, String defaultValue, boolean supportObjC)
 	{
 		super();
 		this.isStatic = isStatic;
@@ -24,14 +26,31 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 		this.name = name;
 		this.isOptional = isOptional;
 		this.defaultValue = defaultValue;
+		this.supportObjC = supportObjC;
 	}
 
 
-	public String getName()
+	public String getName() {
+		return getName(false);
+	}
+
+	public String getName(boolean supportObjC)
 	{
-		return name;
+		if (supportObjC) {
+			return getObjCSaveName();
+		} else {
+			return name;
+		}
 	}
 
+	public String getObjCSaveName() {
+		switch (name) {
+			case "description":
+				return "description_";
+			default:
+				return name;
+		}
+	}
 
 	public boolean isOptional()
 	{
@@ -41,7 +60,7 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 
 	public String lineForConstructor()
 	{
-		return "self." + name + " = " + name;
+		return "self." + getName(supportObjC) + " = " + getName();
 	}
 
 
@@ -77,7 +96,7 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 	{
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("jsonParameter[\"").append(name).append("\"] = ").append(getName());
+		sb.append("jsonParameter[\"").append(getName()).append("\"] = ").append(getName(supportObjC));
 		
 		if (isOptional) {
 			sb.append("?");
@@ -101,7 +120,7 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 	}
 	
 	public void buildParameter(StringBuilder sb) {
-		sb.append(name).append(": ").append(name);
+		sb.append(getName()).append(": ").append(getName());
 	}
 
 
@@ -113,7 +132,7 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 			sb.append("let ");
 		}
 
-		sb.append(name).append(": ");
+		sb.append(getName()).append(": ");
 
 		type.build(sb);
 
@@ -146,7 +165,7 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 			sb.append("var ");
 		}
 
-		sb.append(name).append(": ");
+		sb.append(getName(supportObjC)).append(": ");
 
 		type.build(sb);
 

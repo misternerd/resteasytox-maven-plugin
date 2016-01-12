@@ -22,7 +22,7 @@ public class SwiftMarshallingHelper
 	private static final String MARSHALLING_METHOD = "toJson";
 
 
-	static public void generateMarshallingHelper(Path outputPath) throws IOException
+	static public void generateMarshallingHelper(Path outputPath, boolean supportObjC) throws IOException
 	{
 		final String name = "MarshallingHelper";
 		Path filePath = FileHelper.getOrCreateFilePath(outputPath, "helper", name, FileHelper.FILE_EXTENSION_SWIFT);
@@ -31,22 +31,22 @@ public class SwiftMarshallingHelper
 		swiftFile.addImport("Foundation");
 
 		swiftFile.addProtocol(createMarshallingProtocol());
-		swiftFile.addProtocol(createUnmarshallingProtocol());
+		swiftFile.addProtocol(createUnmarshallingProtocol(supportObjC));
 		
 		swiftFile.addExtension(createMarshallingParameterExtension());
-		swiftFile.addExtensions(createBasicExtensions());
+		swiftFile.addExtensions(createBasicExtensions(supportObjC));
 		
-		swiftFile.addMethod(createUnmarshallingArrayMethod());
+		swiftFile.addMethod(createUnmarshallingArrayMethod(supportObjC));
 
 		swiftFile.writeToFile();
 	}
 
 	
-	static private SwiftMethod createUnmarshallingArrayMethod() {
+	static private SwiftMethod createUnmarshallingArrayMethod(boolean supportObjC) {
 
 		SwiftMethod method = new SwiftMethod("arrayFromJson<T: Unmarshalling>");
 		method.setReturnType("[T]?");
-		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null);
+		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null, supportObjC);
 		method.addParameter(parameter);
 		
 		method.addBody("guard let json = json as? [AnyObject] else {");
@@ -68,10 +68,10 @@ public class SwiftMarshallingHelper
 	}
 
 
-	static private SwiftProtocol createUnmarshallingProtocol()
+	static private SwiftProtocol createUnmarshallingProtocol(boolean supportObjC)
 	{
 		SwiftProtocol unmarshallingProtocol = new SwiftProtocol(UNMARSHALLING_PROTOCOL);
-		SwiftMethod unmarshallingMethod = createUnmarshallingMethod();
+		SwiftMethod unmarshallingMethod = createUnmarshallingMethod(supportObjC);
 		unmarshallingMethod.setIsDefinition(true);
 		unmarshallingProtocol.addMethod(unmarshallingMethod);
 
@@ -90,11 +90,11 @@ public class SwiftMarshallingHelper
 	}
 
 
-	static public SwiftMethod createUnmarshallingMethod()
+	static public SwiftMethod createUnmarshallingMethod(boolean supportObjC)
 	{
 		SwiftConstructorMethod unmarshallingMethod = new SwiftConstructorMethod(null, null, false);
 		unmarshallingMethod.setOptional(true);
-		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null);
+		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null, supportObjC);
 		unmarshallingMethod.addParameter(parameter);
 		return unmarshallingMethod;
 	}
@@ -108,18 +108,18 @@ public class SwiftMarshallingHelper
 	}
 
 
-	static private List<SwiftExtension> createBasicExtensions()
+	static private List<SwiftExtension> createBasicExtensions(boolean supportObjC)
 	{
 		List<SwiftExtension> extensions = new ArrayList<>();
 
 		// Unmarshalling
-		extensions.add(getUnmarshallingExtension(SwiftType.BOOL));
-		extensions.add(getUnmarshallingExtension(SwiftType.STRING));
-		extensions.add(getUnmarshallingExtension(SwiftType.INT));
-		extensions.add(getUnmarshallingExtension(SwiftType.FLOAT));
-		extensions.add(getUnmarshallingExtension(SwiftType.DOUBLE));
-		extensions.add(getUnmarshallingNSDataExtension());
-		extensions.add(getUnmarshallingNSDateExtension());
+		extensions.add(getUnmarshallingExtension(SwiftType.BOOL, supportObjC));
+		extensions.add(getUnmarshallingExtension(SwiftType.STRING, supportObjC));
+		extensions.add(getUnmarshallingExtension(SwiftType.INT, supportObjC));
+		extensions.add(getUnmarshallingExtension(SwiftType.FLOAT, supportObjC));
+		extensions.add(getUnmarshallingExtension(SwiftType.DOUBLE, supportObjC));
+		extensions.add(getUnmarshallingNSDataExtension(supportObjC));
+		extensions.add(getUnmarshallingNSDateExtension(supportObjC));
 
 		// Marshalling
 		extensions.add(getMarshallingExtension(SwiftType.BOOL));
@@ -131,8 +131,8 @@ public class SwiftMarshallingHelper
 		extensions.add(getMarshallingNSDateExtension());
 		
 		// Unmarshalling Array
-		extensions.add(getUnmarshallingFromArrayExtension(SwiftType.NSDATA));
-		extensions.add(getUnmarshallingFromArrayExtension(SwiftType.NSDATE));
+		extensions.add(getUnmarshallingFromArrayExtension(SwiftType.NSDATA, supportObjC));
+		extensions.add(getUnmarshallingFromArrayExtension(SwiftType.NSDATE, supportObjC));
 
 		return extensions;
 	}
@@ -155,13 +155,13 @@ public class SwiftMarshallingHelper
 	}
 
 
-	static private SwiftExtension getUnmarshallingExtension(String type)
+	static private SwiftExtension getUnmarshallingExtension(String type, boolean supportObjC)
 	{
 		List<String> protocol = new ArrayList<>();
 		protocol.add(UNMARSHALLING_PROTOCOL);
 		SwiftExtension extension = new SwiftExtension(type, protocol);
 
-		SwiftMethod unmarshallingMethod = createUnmarshallingMethod();
+		SwiftMethod unmarshallingMethod = createUnmarshallingMethod(supportObjC);
 
 		unmarshallingMethod.addBody("guard let json = json as? %s else {", type);
 		unmarshallingMethod.addBody("\treturn nil");
@@ -206,11 +206,11 @@ public class SwiftMarshallingHelper
 	}
 
 
-	static private SwiftExtension getUnmarshallingNSDataExtension()
+	static private SwiftExtension getUnmarshallingNSDataExtension(boolean supportObjC)
 	{
 		SwiftExtension extension = new SwiftExtension(SwiftType.NSDATA, null);
 
-		SwiftMethod unmarshallingMethod = createUnmarshallingMethod();
+		SwiftMethod unmarshallingMethod = createUnmarshallingMethod(supportObjC);
 		unmarshallingMethod.setConvenience(true);
 
 		unmarshallingMethod.addBody("guard let json = json as? String else {");
@@ -228,7 +228,7 @@ public class SwiftMarshallingHelper
 	}
 
 
-	static private SwiftExtension getUnmarshallingFromArrayExtension(String type)
+	static private SwiftExtension getUnmarshallingFromArrayExtension(String type, boolean supportObjC)
 	{
 		SwiftExtension extension = new SwiftExtension(type, null);
 
@@ -236,7 +236,7 @@ public class SwiftMarshallingHelper
 		method.setStatic(true);
 		method.setReturnType(String.format("[%s]?", type));
 		
-		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null);
+		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null, supportObjC);
 		method.addParameter(parameter);
 		
 		method.addBody("guard let json = json as? [AnyObject] else {");
@@ -250,11 +250,11 @@ public class SwiftMarshallingHelper
 	}
 
 
-	static private SwiftExtension getUnmarshallingNSDateExtension()
+	static private SwiftExtension getUnmarshallingNSDateExtension(boolean supportObjC)
 	{
 		SwiftExtension extension = new SwiftExtension(SwiftType.NSDATE, null);
 
-		SwiftMethod unmarshallingMethod = createUnmarshallingMethod();
+		SwiftMethod unmarshallingMethod = createUnmarshallingMethod(supportObjC);
 		unmarshallingMethod.setConvenience(true);
 
 		unmarshallingMethod.addBody("guard let json = json as? NSTimeInterval else {");
