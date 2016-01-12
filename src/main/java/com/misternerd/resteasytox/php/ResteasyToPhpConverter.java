@@ -1,7 +1,9 @@
 package com.misternerd.resteasytox.php;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.logging.Log;
 
@@ -26,6 +29,7 @@ import com.misternerd.resteasytox.php.baseObjects.PhpParameter;
 import com.misternerd.resteasytox.php.baseObjects.PhpType;
 import com.misternerd.resteasytox.php.baseObjects.PhpVisibility;
 import com.misternerd.resteasytox.php.helperObjects.DateHelperObject;
+import com.misternerd.resteasytox.php.helperObjects.MetaDataGenerator;
 import com.misternerd.resteasytox.php.helperObjects.RestClientHelperObject;
 
 
@@ -34,6 +38,8 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 {
 
 	private final Log logger;
+
+	private final Path sourcePath;
 
 	private final PhpNamespace baseNamespace;
 
@@ -46,6 +52,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 	{
 		super(outputPath, javaPackageName, layout);
 		this.logger = logger;
+		this.sourcePath = new File(outputPath.toFile(), "src").toPath();
 		this.baseNamespace = new PhpNamespace(config.baseNamespace);
 		this.typeLib = new PhpTypeLib(baseNamespace, javaPackageName, layout);
 	}
@@ -53,7 +60,8 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	@Override
 	public void convert() throws Exception
-	{	
+	{
+		setupFolderLayout();
 		generateBaseObjects();
 		generateHelperObjects();
 		generateRequestObjects();
@@ -64,11 +72,29 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 	}
 
 
+	private void setupFolderLayout() throws IOException
+	{
+		if(!Files.isDirectory(outputPath))
+		{
+			Files.createDirectories(outputPath);
+		}
+
+		if(Files.isDirectory(sourcePath))
+		{
+			FileUtils.deleteDirectory(sourcePath.toFile());
+		}
+
+		Files.createDirectories(sourcePath);
+
+		new MetaDataGenerator(outputPath, baseNamespace).createFiles();
+	}
+
+
 	private void generateBaseObjects() throws Exception
 	{
 		for(Class<?> cls : layout.getBaseClasses())
 		{
-			PhpClass phpClass = new PhpClass(outputPath, baseNamespace, cls.getSimpleName(), null);
+			PhpClass phpClass = new PhpClass(sourcePath, baseNamespace, cls.getSimpleName(), null);
 
 			writePublicClassConstants(cls, phpClass);
 			writePrivateAndProtectedFields(cls, phpClass, PhpVisibility.PROTECTED);
@@ -103,7 +129,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	private void generateHelperObjects() throws Exception
 	{
-		new DateHelperObject(outputPath, baseNamespace).write();
+		new DateHelperObject(sourcePath, baseNamespace).write();
 	}
 
 
@@ -112,7 +138,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		for (Class<?> cls : layout.getRequestClasses())
 		{
-			PhpClass phpClass = new PhpClass(outputPath, getNamespaceForClass(cls), cls.getSimpleName(), new PhpType(baseNamespace, "AbstractRequest", null, true, true));
+			PhpClass phpClass = new PhpClass(sourcePath, getNamespaceForClass(cls), cls.getSimpleName(), new PhpType(baseNamespace, "AbstractRequest", null, true, true));
 
 			writePublicClassConstants(cls, phpClass);
 			writePrivateAndProtectedFields(cls, phpClass, PhpVisibility.PROTECTED);
@@ -129,7 +155,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 	{
 		for (Class<?> cls : layout.getResponseClasses())
 		{
-			PhpClass phpClass = new PhpClass(outputPath, getNamespaceForClass(cls), cls.getSimpleName(), new PhpType(baseNamespace, "GenericResponse", null, true, true));
+			PhpClass phpClass = new PhpClass(sourcePath, getNamespaceForClass(cls), cls.getSimpleName(), new PhpType(baseNamespace, "GenericResponse", null, true, true));
 
 			writePublicClassConstants(cls, phpClass);
 			writePrivateAndProtectedFields(cls, phpClass, PhpVisibility.PROTECTED);
@@ -157,7 +183,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 				superType = new PhpType(namespace, superclass.getSimpleName(), null, true, true);
 			}
 
-			PhpClass phpClass = new PhpClass(outputPath, namespace, cls.getSimpleName(), superType);
+			PhpClass phpClass = new PhpClass(sourcePath, namespace, cls.getSimpleName(), superType);
 
 			List<Field> enumConstants = getEnumConstants(cls);
 
@@ -171,7 +197,11 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 				}
 
 				phpClass.addMember(PhpVisibility.PRIVATE, PhpBasicType.STRING, "enumValue", null);
-				writeEmptyConstructor(phpClass);
+
+				phpClass
+					.addMethod(PhpVisibility.PUBLIC, false, "__construct", null, null)
+					.addParameter(new PhpParameter(PhpBasicType.STRING, "_enumValue"))
+					.addBody("$this->enumValue = $_enumValue;");
 
 				phpClass.addMethod(PhpVisibility.PUBLIC, true, "create", null, null)
 					.addParameter(new PhpParameter(PhpBasicType.STRING, "enumValue"))
@@ -304,8 +334,8 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		for (ServiceClass serviceClass : layout.getServiceClasses())
 		{
-			PhpClass phpClass = new PhpClass(outputPath, namespace, serviceClass.name, new PhpType(baseNamespace, "RestClient", null, true, true));
-			writeClassHeader(phpClass, serviceClass.name, serviceClass.path);
+			PhpClass phpClass = new PhpClass(sourcePath, namespace, serviceClass.name, new PhpType(baseNamespace, "RestClient", null, true, true));
+			writeServiceClassHeader(phpClass, serviceClass.name, serviceClass.path);
 
 			for(ServiceMethod method : serviceClass.methods)
 			{
@@ -318,14 +348,16 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 	}
 
 
-	private void writeClassHeader(PhpClass phpClass, String className, String servicePath)
+	private void writeServiceClassHeader(PhpClass phpClass, String className, String servicePath)
 	{
-		PhpType loggerType = new PhpType(baseNamespace, "Logger", null, true, true);
+		PhpType loggerType = new PhpType(new PhpNamespace("Psr\\Log"), "LoggerInterface", null, true, true);
 		phpClass.addTypeImport(loggerType);
 		phpClass.addTypeImport(new PhpType(baseNamespace, "RestClient", null, true, true));
 		phpClass.addConstant("PATH", servicePath);
 		phpClass.addMember(PhpVisibility.PRIVATE, loggerType, "logger", null);
-		phpClass.addMethod(PhpVisibility.PUBLIC, false, "__construct", null, "$this->logger = new Logger(__FILE__);");
+		phpClass
+			.addMethod(PhpVisibility.PUBLIC, false, "__construct", null, "$this->logger = $logger;")
+			.addParameter(new PhpParameter(loggerType, "logger"));
 	}
 
 
@@ -420,21 +452,19 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 	{
 		StringBuilder log = new StringBuilder();
 
-		log.append("$this->logger->debug(__LINE__, '" + methodName + "(");
+		log.append("$this->logger->debug('" + methodName + "(");
 
-		for (PhpParameter param : params)
-		{
-			log.append(param.originalName).append("={}, ");
-		}
+		log.append(params.stream()
+				.map(param -> String.format("%s={%s}", param.originalName, param.adaptedName))
+				.collect(Collectors.joining(", ")));
 
-		log.append(")'");
+		log.append(")', [");
 
-		for (PhpParameter param : params)
-		{
-			log.append(", $").append(param.originalName);
-		}
+		log.append(params.stream()
+				.map(param -> String.format("'%s' => $%s", param.adaptedName, param.originalName))
+				.collect(Collectors.joining(", ")));
 
-		log.append(");");
+		log.append("]);");
 
 		return log.toString();
 	}
@@ -442,7 +472,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	private void generateRestClient() throws IOException
 	{
-		RestClientHelperObject restClient = new RestClientHelperObject(outputPath, baseNamespace, serviceClasses);
+		RestClientHelperObject restClient = new RestClientHelperObject(sourcePath, baseNamespace, serviceClasses);
 		restClient.write();
 	}
 

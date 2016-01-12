@@ -16,11 +16,15 @@ import com.misternerd.resteasytox.php.baseObjects.PhpVisibility;
 public class RestClientHelperObject extends AbstractHelperObject
 {
 
+	private final PhpType loggerType = new PhpType(new PhpNamespace("Psr\\Log"), "LoggerInterface",null, true, true);
+
+
 	public RestClientHelperObject(Path outputPath, PhpNamespace namespace, List<PhpClass> serviceClasses)
 	{
 		super(outputPath, namespace, "RestClient", null);
 
 		phpClass.addMember(PhpVisibility.PRIVATE, true, PhpBasicType.STRING, "baseUrl", null);
+		phpClass.addMember(PhpVisibility.PRIVATE, true, loggerType, "logger", null);
 		phpClass.addMember(PhpVisibility.PROTECTED, true, new PhpType(PhpNamespace.ROOT, "JsonMapper", null, true, true), "mapper", null);
 
 		PhpMethod initMethod = createInitMethod();
@@ -34,11 +38,14 @@ public class RestClientHelperObject extends AbstractHelperObject
 
 	private PhpMethod createInitMethod()
 	{
-		PhpMethod initMethod = phpClass.addMethod(PhpVisibility.PUBLIC, true, "init", null, null);
-		initMethod.addParameter(new PhpParameter(PhpBasicType.STRING, "baseUrl"));
-		initMethod.addBody("self::$baseUrl = $baseUrl;");
-		initMethod.addBody("self::$mapper = new \\JsonMapper();");
-		initMethod.addBody("self::$mapper->bExceptionOnUndefinedProperty = true;");
+		PhpMethod initMethod = phpClass.addMethod(PhpVisibility.PUBLIC, true, "init", null, null)
+			.addParameter(new PhpParameter(PhpBasicType.STRING, "baseUrl"))
+			.addParameter(new PhpParameter(loggerType, "logger"))
+
+			.addBody("self::$baseUrl = $baseUrl;")
+			.addBody("self::$logger = $logger;")
+			.addBody("self::$mapper = new \\JsonMapper();")
+			.addBody("self::$mapper->bExceptionOnUndefinedProperty = true;");
 		return initMethod;
 	}
 
@@ -51,7 +58,7 @@ public class RestClientHelperObject extends AbstractHelperObject
 
 			phpClass.addTypeImport(new PhpType(serviceClass.namespace, serviceClass.className, null, true, true));
 			phpClass.addMember(PhpVisibility.PRIVATE, true, null, serviceName, null);
-			initMethod.addBody(String.format("self::$%s = new %s();", serviceName, serviceClass.className));
+			initMethod.addBody(String.format("self::$%s = new %s(self::$logger);", serviceName, serviceClass.className));
 
 			phpClass.addMethod(PhpVisibility.PUBLIC, true, serviceName, null,
 					String.format("return self::$%s;", serviceName));

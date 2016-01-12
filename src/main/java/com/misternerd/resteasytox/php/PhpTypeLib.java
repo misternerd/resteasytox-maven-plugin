@@ -57,6 +57,7 @@ public class PhpTypeLib
 
 			if (Map.class.isAssignableFrom(cls))
 			{
+				return PhpBasicType.ARRAY;
 			}
 		}
 

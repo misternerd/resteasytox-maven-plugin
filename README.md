@@ -49,7 +49,7 @@ Usage
 				</serviceClassnames>
 				<convertToPhp>true</convertToPhp>
 				<phpOutputPath>/tmp/phpOutput</phpOutputPath>
-				<phpBaseNamespace>lessons2go\rest</phpBaseNamespace>
+				<phpBaseNamespace>your\namespace\rest</phpBaseNamespace>
 				<convertToJavascript>true</convertToJavascript>
 				<javascriptOutputPath>/tmp/javascriptOutput</javascriptOutputPath>
 			</configuration>

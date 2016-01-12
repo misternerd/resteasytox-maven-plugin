@@ -196,7 +196,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 		if(layout.getDtoClasses().contains(valueClass))
 		{
 			addBody("\t\tvar value = new %s();", valueClass.getSimpleName());
-			addBody("\t\tvalue.initFromJson(jsonData['%s'][index]);");
+			addBody("\t\tvalue.initFromJson(jsonData['%s'][index]);", memberName);
 		}
 		else
 		{

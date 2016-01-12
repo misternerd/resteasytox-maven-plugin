@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -143,8 +144,9 @@ public class PhpClass
 
 	public String build()
 	{
-		StringBuilder result = new StringBuilder();
+		createToStringMethod();
 
+		StringBuilder result = new StringBuilder();
 		appendFileHeaderWithNamespace(result);
 		appendFileImports(result);
 		appendTypeImports(result);
@@ -155,6 +157,18 @@ public class PhpClass
 		appendClassFooter(result);
 
 		return result.toString();
+	}
+
+
+	private void createToStringMethod()
+	{
+		PhpMethod toStringMethod = addMethod(PhpVisibility.PUBLIC, false, "__toString", null, null);
+
+		String membersAsString = members.stream()
+			.map(member -> String.format("%s=>{$this->%s}", member.name, member.name))
+			.collect(Collectors.joining(", "));
+
+		toStringMethod.addBody(String.format("return \"%s[%s]\";", className, membersAsString));
 	}
 
 
