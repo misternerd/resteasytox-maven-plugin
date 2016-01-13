@@ -3,8 +3,13 @@ package com.misternerd.resteasytox.swift.helper;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
 
 import com.misternerd.resteasytox.JaxWsAnnotations;
+import com.misternerd.resteasytox.base.AbstractDto;
 
 public class ReflectionHelper
 {
@@ -26,9 +31,8 @@ public class ReflectionHelper
 		try
 		{
 			Method nillableMethod = xmlElementAnnotation.annotationType().getMethod("nillable");
-			boolean nillable = (boolean) nillableMethod.invoke(xmlElementAnnotation);
 
-			return nillable;
+			return (boolean) nillableMethod.invoke(xmlElementAnnotation);
 		}
 		catch (Exception e)
 		{
@@ -36,5 +40,26 @@ public class ReflectionHelper
 		}
 
 		return false;
+	}
+
+	public static boolean isAbstractDto(Field field, Map<Class<?>, AbstractDto> abstractDtoMap) {
+		Class<?> type = field.getType();
+
+		if (field.getGenericType() instanceof ParameterizedType)
+		{
+			if (List.class.isAssignableFrom(type))
+			{
+				ParameterizedType parameterized = (ParameterizedType) field.getGenericType();
+				Type[] types = parameterized.getActualTypeArguments();
+
+				type = (Class<?>) types[0];
+			}
+			else if (Map.class.isAssignableFrom(type))
+			{
+				// TODO: We need to handle Maps
+			}
+		}
+
+		return abstractDtoMap.containsKey(type);
 	}
 }

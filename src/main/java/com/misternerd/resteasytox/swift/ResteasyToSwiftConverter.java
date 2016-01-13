@@ -329,7 +329,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 			boolean isStatic = Modifier.isStatic(field.getModifiers());
 			boolean isFinal = Modifier.isFinal(field.getModifiers());
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
-			boolean isAbstract = layout.abstractDtos.containsKey(field.getClass());
+			boolean isAbstract = ReflectionHelper.isAbstractDto(field, layout.abstractDtos);
 			String defaultValue = getDefaultValue(field);
 
 			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue, supportObjC);
