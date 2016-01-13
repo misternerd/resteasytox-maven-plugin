@@ -12,6 +12,8 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 
 	private boolean isOptional;
 
+	private boolean isAbstract = false;
+
 	private final String defaultValue;
 
 	private final boolean supportObjC;
@@ -57,6 +59,10 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 		return isOptional;
 	}
 
+	public void setAbstract(boolean isAbstract)
+	{
+		this.isAbstract = isAbstract;
+	}
 
 	public String lineForConstructor()
 	{
@@ -76,13 +82,17 @@ public class SwiftProperty extends Buildable implements ParameterBuildable
 			type.build(sb);
 			sb.append("? = ");
 			
-			// We need special handling for data and date, because they don't implement Unmarshalling protocol
-			if (type.getName().equals(SwiftType.NSDATA) ||
+			// We need special handling for data and date, because they don't implement Unmarshalling protocol.
+			// For abstract DTOs we need to call their factory methods to create appropriate subclasses.
+			if (isAbstract ||
+					type.getName().equals(SwiftType.NSDATA) ||
 					type.getName().equals(SwiftType.NSDATE)) {
 				sb.append(type.getName()).append(".arrayFromJson(json[\"").append(getName()).append("\"])");
 			} else {
 				sb.append("arrayFromJson(json[\"").append(getName()).append("\"])");
 			}
+		} else if (isAbstract) {
+			sb.append(" = ").append(type.getName()).append(".create(json[\"").append(getName()).append("\"])");
 		} else {
 			sb.append(" = ").append(type.getName()).append("(json: json[\"").append(getName()).append("\"])");
 		}

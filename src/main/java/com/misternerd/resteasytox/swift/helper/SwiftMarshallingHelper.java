@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.swift.objects.SwiftConstructorMethod;
 import com.misternerd.resteasytox.swift.objects.SwiftExtension;
 import com.misternerd.resteasytox.swift.objects.SwiftFile;
@@ -105,6 +106,52 @@ public class SwiftMarshallingHelper
 		SwiftMethod marshallingMethod = new SwiftMethod(MARSHALLING_METHOD);
 		marshallingMethod.setReturnType(SwiftType.ANYOBJECT);
 		return marshallingMethod;
+	}
+
+
+	static public SwiftMethod createUnmarshallingMethodForAbstractClass(String className)
+	{
+		SwiftMethod method = new SwiftMethod("arrayFromJson");
+		method.setStatic(true);
+		method.setReturnType("[" + className + "]?");
+		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null, false);
+		method.addParameter(parameter);
+
+		method.addBody("guard let json = json as? [AnyObject] else {");
+		method.addBody("\treturn nil");
+		method.addBody("}");
+		method.addBody("return json.flatMap{create($0)}");
+		return method;
+	}
+
+
+	static public SwiftMethod createUnmarshallingForAbstractClass(AbstractDto abstractDto) {
+
+		SwiftMethod method = new SwiftMethod("create");
+		method.setStatic(true);
+		method.setReturnType(abstractDto.abstractClass.getSimpleName() + "?");
+		SwiftProperty parameter = new SwiftProperty(false, false, new SwiftType(SwiftType.ANYOBJECT), "json", true, null, false);
+		method.addParameter(parameter);
+
+		method.addBody("guard let json = json as? [String: AnyObject] else {");
+		method.addBody("\treturn nil");
+		method.addBody("}");
+		method.addBody("guard let type = String(json: json[\"%s\"]) else {", abstractDto.typeInfoField);
+		method.addBody("\treturn nil");
+		method.addBody("}");
+		method.addBody("switch type {");
+		for (String typeName : abstractDto.implementingClassesByTypeName.keySet()) {
+			String concreteName = abstractDto.implementingClassesByTypeName.get(typeName).getSimpleName();
+			method.addBody("case \"%s\":", typeName);
+			method.addBody("\treturn %s(json: json)", concreteName);
+		}
+		method.addBody("default:");
+		method.addBody("\treturn nil");
+		method.addBody("}");
+
+
+
+		return method;
 	}
 
 

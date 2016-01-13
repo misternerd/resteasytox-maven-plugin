@@ -7,21 +7,19 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.misternerd.resteasytox.AbstractResteasyConverter;
 import com.misternerd.resteasytox.RestServiceLayout;
+import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
 import com.misternerd.resteasytox.swift.helper.FileHelper;
 import com.misternerd.resteasytox.swift.helper.ReflectionHelper;
 import com.misternerd.resteasytox.swift.helper.SwiftMarshallingHelper;
 import com.misternerd.resteasytox.swift.helper.SwiftTypeHelper;
-import com.misternerd.resteasytox.swift.objects.SwiftClass;
-import com.misternerd.resteasytox.swift.objects.SwiftEnum;
-import com.misternerd.resteasytox.swift.objects.SwiftFile;
-import com.misternerd.resteasytox.swift.objects.SwiftProperty;
-import com.misternerd.resteasytox.swift.objects.SwiftServiceMethod;
+import com.misternerd.resteasytox.swift.objects.*;
 
 public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 {
@@ -88,6 +86,17 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 					// Superclass is also a dto and will include the needed
 					// protocols
 					swiftClass.setOverrideProtocols(true);
+				}
+
+				if (layout.abstractDtos.containsKey(cls))
+				{
+					AbstractDto abstractDto = layout.abstractDtos.get(cls);
+
+					SwiftMethod method = SwiftMarshallingHelper.createUnmarshallingMethodForAbstractClass(abstractDto.abstractClass.getSimpleName());
+					swiftClass.addMethod(method);
+
+					SwiftMethod arrayMethod = SwiftMarshallingHelper.createUnmarshallingForAbstractClass(abstractDto);
+					swiftClass.addMethod(arrayMethod);
 				}
 
 				List<Field> fields = getPrivateAndProtectedMemberVariables(cls, false);
@@ -304,31 +313,31 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 
 	private void writeProperties(SwiftClass swiftClass, List<Field> fields)
 	{
-		for (Field field : fields)
-		{
-			boolean isStatic = Modifier.isStatic(field.getModifiers());
-			boolean isFinal = Modifier.isFinal(field.getModifiers());
-			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
-			String defaultValue = getDefaultValue(field);
-
-			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue, supportObjC);
-			swiftClass.addProperty(property);
-		}
+		propertiesForFields(fields).forEach(swiftClass::addProperty);
 	}
 
 
 	private void writePropertiesOfSuper(SwiftClass swiftClass, List<Field> fields)
 	{
+		propertiesForFields(fields).forEach(swiftClass::addSuperProperty);
+	}
+
+	private List<SwiftProperty> propertiesForFields(List<Field> fields) {
+		List<SwiftProperty> properties = new ArrayList<>();
 		for (Field field : fields)
 		{
 			boolean isStatic = Modifier.isStatic(field.getModifiers());
 			boolean isFinal = Modifier.isFinal(field.getModifiers());
 			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
+			boolean isAbstract = layout.abstractDtos.containsKey(field.getClass());
 			String defaultValue = getDefaultValue(field);
 
 			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue, supportObjC);
-			swiftClass.addSuperProperty(property);
+			property.setAbstract(isAbstract);
+
+			properties.add(property);
 		}
+		return properties;
 	}
 
 
