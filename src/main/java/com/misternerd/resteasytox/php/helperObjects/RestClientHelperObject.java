@@ -56,8 +56,9 @@ public class RestClientHelperObject extends AbstractHelperObject
 		{
 			String serviceName = StringUtils.uncapitalize(serviceClass.className);
 
-			phpClass.addTypeImport(new PhpType(serviceClass.namespace, serviceClass.className, null, true, true));
-			phpClass.addMember(PhpVisibility.PRIVATE, true, null, serviceName, null);
+			PhpType type = new PhpType(serviceClass.namespace, serviceClass.className, null, true, true);
+			phpClass.addTypeImport(type);
+			phpClass.addMember(PhpVisibility.PRIVATE, true, type, serviceName, null);
 			initMethod.addBody(String.format("self::$%s = new %s(self::$logger);", serviceName, serviceClass.className));
 
 			phpClass.addMethod(PhpVisibility.PUBLIC, true, serviceName, null,

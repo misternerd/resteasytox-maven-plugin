@@ -12,3 +12,5 @@ tar.gz
 *target/*
 */.project
 dependency-reduced-pom.xml
+.idea
+*.iml
