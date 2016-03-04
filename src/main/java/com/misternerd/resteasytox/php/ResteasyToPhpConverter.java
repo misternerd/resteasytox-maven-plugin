@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -363,12 +360,12 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	private void writeServiceMethod(PhpClass phpClass, ServiceMethod method)
 	{
-		Set<PhpParameter> pathParams = convertMethodParmsToPhpParams(method.pathParams);
 		Set<PhpParameter> headerParams = convertMethodParmsToPhpParams(method.headerParams);
+		Set<PhpParameter> pathParams = convertMethodParmsToPhpParams(method.pathParams);
 
-		Set<PhpParameter> allParams = new HashSet<>();
-		allParams.addAll(pathParams);
+		Set<PhpParameter> allParams = new LinkedHashSet<>();
 		allParams.addAll(headerParams);
+		allParams.addAll(pathParams);
 
 		if(method.bodyParam != null)
 		{
