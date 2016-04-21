@@ -95,6 +95,12 @@ public class RestServiceLayout
 	{
 		return serviceClasses;
 	}
+	
+
+	public JaxWsAnnotations getAnnotations()
+	{
+		return jaxWsAnnotations;
+	}
 
 
 	public void readLayoutFromReflection(boolean printLayout)

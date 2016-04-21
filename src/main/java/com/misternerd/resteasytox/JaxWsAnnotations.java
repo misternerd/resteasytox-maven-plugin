@@ -24,6 +24,8 @@ public class JaxWsAnnotations
 	public final Class<? extends Annotation> jsonSubTypes;
 
 	public final Class<? extends Annotation> jsonTypeInfo;
+	
+	public final Class<? extends Annotation> xmlElement;
 
 
 	@SuppressWarnings("unchecked")
@@ -39,6 +41,7 @@ public class JaxWsAnnotations
 		this.context = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.core.Context");
 		this.jsonSubTypes = (Class<? extends Annotation>) classLoader.loadClass("com.fasterxml.jackson.annotation.JsonSubTypes");
 		this.jsonTypeInfo = (Class<? extends Annotation>) classLoader.loadClass("com.fasterxml.jackson.annotation.JsonTypeInfo");
+		this.xmlElement = (Class<? extends Annotation>) classLoader.loadClass("javax.xml.bind.annotation.XmlElement");
 	}
 
 }
