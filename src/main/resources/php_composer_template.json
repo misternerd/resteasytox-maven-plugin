@@ -13,7 +13,8 @@
     ],
     "require": {
         "php": ">=5.3",
-        "nategood/httpful": ">=0.2.19"
+        "nategood/httpful": ">=0.2.19",
+        "netresearch/jsonmapper": ">=0.11.0"
     },
     "autoload": {
         "psr-0": {
