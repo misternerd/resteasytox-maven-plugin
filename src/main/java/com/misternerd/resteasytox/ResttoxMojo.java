@@ -27,6 +27,7 @@ import org.apache.maven.project.MavenProject;
 import com.misternerd.resteasytox.javascript.ResteasyToJavascriptConverter;
 import com.misternerd.resteasytox.php.PhpConverterConfig;
 import com.misternerd.resteasytox.php.ResteasyToPhpConverter;
+import com.misternerd.resteasytox.swift.ResteasyToSwiftConverter;
 
 @Mojo(name = "convert", defaultPhase = LifecyclePhase.PROCESS_CLASSES, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ResttoxMojo extends AbstractMojo
@@ -59,6 +60,18 @@ public class ResttoxMojo extends AbstractMojo
 	@Parameter(property = "javascriptOutputPath", defaultValue = "/tmp/javascript")
 	private String javascriptOutputPath;
 
+	@Parameter(property = "convertToSwift", defaultValue = "false")
+	private boolean convertToSwift;
+
+	@Parameter(property = "swiftOutputPath", defaultValue = "/tmp/swift")
+	private String swiftOutputPath;
+
+	@Parameter(property = "generateAlamofireServices", defaultValue = "false")
+	private boolean generateAlamofireServices;
+
+	@Parameter(property = "supportObjC", defaultValue = "false")
+	private boolean supportObjC;
+
 	@Component
 	private MavenProject project;
 
@@ -77,7 +90,7 @@ public class ResttoxMojo extends AbstractMojo
 	{
 		try
 		{
-			if (!convertToPhp && !convertToJavascript)
+			if (!convertToPhp && !convertToJavascript && !convertToSwift)
 			{
 				logger.debug("No target language specified, no conversion started");
 				return;
@@ -107,8 +120,16 @@ public class ResttoxMojo extends AbstractMojo
 				ResteasyToJavascriptConverter converter = new ResteasyToJavascriptConverter(outputPath, javaPackageName, serviceLayout);
 				converter.convert();
 			}
+
+			if (convertToSwift)
+			{
+				logger.debug("Converting REST API to Swift with target dir = " + swiftOutputPath);
+				Path outputPath = verifyOrCreatePath(swiftOutputPath);
+				ResteasyToSwiftConverter converter = new ResteasyToSwiftConverter(outputPath, javaPackageName, serviceLayout, generateAlamofireServices, supportObjC);
+				converter.convert();
+			}
 		}
-		catch(MojoExecutionException | MojoFailureException e)
+		catch (MojoExecutionException | MojoFailureException e)
 		{
 			throw e;
 		}
@@ -153,7 +174,7 @@ public class ResttoxMojo extends AbstractMojo
 	{
 		List<Class<?>> serviceClasses = new ArrayList<>(serviceClassnames.size());
 
-		for(String serviceClassname : serviceClassnames)
+		for (String serviceClassname : serviceClassnames)
 		{
 			Class<?> loadedClass = classLoader.loadClass(serviceClassname);
 			logger.debug("Loading service class=" + serviceClassname);
@@ -166,7 +187,7 @@ public class ResttoxMojo extends AbstractMojo
 
 	private void loadAdditionalDtoClasses(URLClassLoader classLoader, RestServiceLayout serviceLayout) throws ClassNotFoundException
 	{
-		for(String clsName : additionalDtoClassnames)
+		for (String clsName : additionalDtoClassnames)
 		{
 			serviceLayout.getDtoClasses().add(classLoader.loadClass(clsName));
 		}
