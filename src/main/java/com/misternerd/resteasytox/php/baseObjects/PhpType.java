@@ -16,14 +16,17 @@ public class PhpType extends AbstractBaseObject
 
 	public final boolean addAsTypeHint;
 
+	public final boolean nullable;
 
-	public PhpType(PhpNamespace namespace, String name, String suffix, boolean addToVarComment, boolean addAsTypeHint)
+
+	public PhpType(PhpNamespace namespace, String name, String suffix, boolean addToVarComment, boolean addAsTypeHint, boolean nullable)
 	{
 		this.namespace = namespace;
 		this.name = name;
 		this.suffix = suffix;
 		this.addToTypeComment = addToVarComment;
 		this.addAsTypeHint = false;
+		this.nullable = nullable;
 	}
 
 
@@ -37,7 +40,13 @@ public class PhpType extends AbstractBaseObject
 
 		if (namespace != null)
 		{
-			sb.append(namespace.toAbsoluteNamespace(true)).append("\\");
+			String absoluteNamespace = namespace.toAbsoluteNamespace(true);
+			sb.append(absoluteNamespace);
+
+			if(!"\\".equals(absoluteNamespace))
+			{
+				sb.append("\\");
+			}
 		}
 
 		sb.append(name);
@@ -45,6 +54,11 @@ public class PhpType extends AbstractBaseObject
 		if(suffix != null)
 		{
 			sb.append(suffix);
+		}
+
+		if(nullable)
+		{
+			sb.append("|null");
 		}
 	}
 

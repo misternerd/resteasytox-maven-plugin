@@ -1,4 +1,4 @@
-package com.misternerd.resteasytox.swift.helper;
+package com.misternerd.resteasytox.base;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -14,11 +14,12 @@ import com.misternerd.resteasytox.base.AbstractDto;
 public class ReflectionHelper
 {
 	/**
-	 * Will check the nillable flag of the xmlElement Annotation.
+	 * Will check the nillable flag of the @XmlElement annotation.
+	 * For Swift, this declares if a field is optional in Swift.
 	 * 
 	 * @return true, if the nillable flag is set.
 	 */
-	public static boolean isOptional(Field field, JaxWsAnnotations jaxWsAnnotations)
+	public static boolean isNullableField(Field field, JaxWsAnnotations jaxWsAnnotations)
 	{
 
 		Annotation xmlElementAnnotation = field.getAnnotation(jaxWsAnnotations.xmlElement);
@@ -42,6 +43,7 @@ public class ReflectionHelper
 		return false;
 	}
 
+
 	public static boolean isAbstractDto(Field field, Map<Class<?>, AbstractDto> abstractDtoMap) {
 		Class<?> type = field.getType();
 
@@ -62,4 +64,5 @@ public class ReflectionHelper
 
 		return abstractDtoMap.containsKey(type);
 	}
+
 }

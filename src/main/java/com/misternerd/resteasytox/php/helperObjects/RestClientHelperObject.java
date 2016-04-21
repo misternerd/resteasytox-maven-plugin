@@ -16,7 +16,7 @@ import com.misternerd.resteasytox.php.baseObjects.PhpVisibility;
 public class RestClientHelperObject extends AbstractHelperObject
 {
 
-	private final PhpType loggerType = new PhpType(new PhpNamespace("Psr\\Log"), "LoggerInterface",null, true, true);
+	private final PhpType loggerType = new PhpType(new PhpNamespace("Psr\\Log"), "LoggerInterface",null, true, true, false);
 
 
 	public RestClientHelperObject(Path outputPath, PhpNamespace namespace, List<PhpClass> serviceClasses)
@@ -25,7 +25,7 @@ public class RestClientHelperObject extends AbstractHelperObject
 
 		phpClass.addMember(PhpVisibility.PRIVATE, true, PhpBasicType.STRING, "baseUrl", null);
 		phpClass.addMember(PhpVisibility.PRIVATE, true, loggerType, "logger", null);
-		phpClass.addMember(PhpVisibility.PROTECTED, true, new PhpType(PhpNamespace.ROOT, "JsonMapper", null, true, true), "mapper", null);
+		phpClass.addMember(PhpVisibility.PROTECTED, true, new PhpType(PhpNamespace.ROOT, "JsonMapper", null, true, true, false), "mapper", null);
 
 		PhpMethod initMethod = createInitMethod();
 		addServicesToClass(serviceClasses, initMethod);
@@ -38,7 +38,7 @@ public class RestClientHelperObject extends AbstractHelperObject
 
 	private PhpMethod createInitMethod()
 	{
-		PhpMethod initMethod = phpClass.addMethod(PhpVisibility.PUBLIC, true, "init", null, null)
+		return phpClass.addMethod(PhpVisibility.PUBLIC, true, "init", null, null)
 			.addParameter(new PhpParameter(PhpBasicType.STRING, "baseUrl"))
 			.addParameter(new PhpParameter(loggerType, "logger"))
 
@@ -46,7 +46,6 @@ public class RestClientHelperObject extends AbstractHelperObject
 			.addBody("self::$logger = $logger;")
 			.addBody("self::$mapper = new \\JsonMapper();")
 			.addBody("self::$mapper->bExceptionOnUndefinedProperty = true;");
-		return initMethod;
 	}
 
 
@@ -56,7 +55,7 @@ public class RestClientHelperObject extends AbstractHelperObject
 		{
 			String serviceName = StringUtils.uncapitalize(serviceClass.className);
 
-			PhpType type = new PhpType(serviceClass.namespace, serviceClass.className, null, true, true);
+			PhpType type = new PhpType(serviceClass.namespace, serviceClass.className, null, true, true, false);
 			phpClass.addTypeImport(type);
 			phpClass.addMember(PhpVisibility.PRIVATE, true, type, serviceName, null);
 			initMethod.addBody(String.format("self::$%s = new %s(self::$logger);", serviceName, serviceClass.className));

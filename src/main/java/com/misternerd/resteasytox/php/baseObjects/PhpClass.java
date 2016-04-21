@@ -84,14 +84,6 @@ public class PhpClass
 	}
 
 
-	public PhpMember addMember(PhpVisibility visibility, PhpType type, String name, String value)
-	{
-		PhpMember result = new PhpMember(visibility, false, type, name, value);
-		members.add(result);
-		return result;
-	}
-
-
 	public PhpMember addMember(PhpVisibility visibility, boolean isStatic, PhpType type, String name, String value)
 	{
 		PhpMember result = new PhpMember(visibility, isStatic, type, name, value);

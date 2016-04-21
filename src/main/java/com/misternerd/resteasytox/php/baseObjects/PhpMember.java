@@ -47,6 +47,11 @@ public class PhpMember extends AbstractBaseObject
 			{
 				sb.append(type.suffix);
 			}
+
+			if(type.nullable)
+			{
+				sb.append("|null");
+			}
 		}
 		else
 		{

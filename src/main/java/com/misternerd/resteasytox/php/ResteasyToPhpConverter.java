@@ -2,12 +2,15 @@ package com.misternerd.resteasytox.php;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.misternerd.resteasytox.base.ReflectionHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.logging.Log;
@@ -135,7 +138,8 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		for (Class<?> cls : layout.getRequestClasses())
 		{
-			PhpClass phpClass = new PhpClass(sourcePath, getNamespaceForClass(cls), cls.getSimpleName(), new PhpType(baseNamespace, "AbstractRequest", null, true, true));
+			PhpClass phpClass = new PhpClass(sourcePath, getNamespaceForClass(cls), cls.getSimpleName(),
+				new PhpType(baseNamespace, "AbstractRequest", null, true, true, false));
 
 			writePublicClassConstants(cls, phpClass);
 			writePrivateAndProtectedFields(cls, phpClass, PhpVisibility.PROTECTED);
@@ -152,7 +156,8 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 	{
 		for (Class<?> cls : layout.getResponseClasses())
 		{
-			PhpClass phpClass = new PhpClass(sourcePath, getNamespaceForClass(cls), cls.getSimpleName(), new PhpType(baseNamespace, "GenericResponse", null, true, true));
+			PhpClass phpClass = new PhpClass(sourcePath, getNamespaceForClass(cls), cls.getSimpleName(),
+				new PhpType(baseNamespace, "GenericResponse", null, true, true, false));
 
 			writePublicClassConstants(cls, phpClass);
 			writePrivateAndProtectedFields(cls, phpClass, PhpVisibility.PROTECTED);
@@ -177,7 +182,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 			if(superclass != null && layout.getDtoClasses().contains(superclass))
 			{
-				superType = new PhpType(namespace, superclass.getSimpleName(), null, true, true);
+				superType = new PhpType(namespace, superclass.getSimpleName(), null, true, true, false);
 			}
 
 			PhpClass phpClass = new PhpClass(sourcePath, namespace, cls.getSimpleName(), superType);
@@ -193,7 +198,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 					phpClass.addConstant(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
 				}
 
-				phpClass.addMember(PhpVisibility.PRIVATE, PhpBasicType.STRING, "enumValue", null);
+				phpClass.addMember(PhpVisibility.PRIVATE, false, PhpBasicType.STRING, "enumValue", null);
 
 				phpClass
 					.addMethod(PhpVisibility.PUBLIC, false, "__construct", null, null)
@@ -276,7 +281,8 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		for (Field field : fields)
 		{
-			phpClass.addMember(visibility, typeLib.getPhpType(field), field.getName(), null);
+			boolean nullable = ReflectionHelper.isNullableField(field, layout.getAnnotations());
+			phpClass.addMember(visibility, false, typeLib.getPhpType(field, nullable), field.getName(), null);
 		}
 	}
 
@@ -296,7 +302,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 			for (Field field : getPrivateAndProtectedMemberVariables(cls.getSuperclass(), false))
 			{
 				String name = field.getName();
-				phpMethod.addParameter(new PhpParameter(typeLib.getPhpType(field), name));
+				phpMethod.addParameter(new PhpParameter(typeLib.getPhpType(field, false), name));
 				phpMethod.addBody(String.format("$instance->%s = $%s;", name, name));
 			}
 		}
@@ -304,7 +310,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 		for (Field field : getPrivateAndProtectedMemberVariables(cls, false))
 		{
 			String name = field.getName();
-			phpMethod.addParameter(new PhpParameter(typeLib.getPhpType(field.getType()), name));
+			phpMethod.addParameter(new PhpParameter(typeLib.getPhpType(field.getType(), false), name));
 			phpMethod.addBody(String.format("$instance->%s = $%s;", name, name));
 		}
 
@@ -331,7 +337,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		for (ServiceClass serviceClass : layout.getServiceClasses())
 		{
-			PhpClass phpClass = new PhpClass(sourcePath, namespace, serviceClass.name, new PhpType(baseNamespace, "RestClient", null, true, true));
+			PhpClass phpClass = new PhpClass(sourcePath, namespace, serviceClass.name, new PhpType(baseNamespace, "RestClient", null, true, true, false));
 			writeServiceClassHeader(phpClass, serviceClass.name, serviceClass.path);
 
 			for(ServiceMethod method : serviceClass.methods)
@@ -347,11 +353,11 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	private void writeServiceClassHeader(PhpClass phpClass, String className, String servicePath)
 	{
-		PhpType loggerType = new PhpType(new PhpNamespace("Psr\\Log"), "LoggerInterface", null, true, true);
+		PhpType loggerType = new PhpType(new PhpNamespace("Psr\\Log"), "LoggerInterface", null, true, true, false);
 		phpClass.addTypeImport(loggerType);
-		phpClass.addTypeImport(new PhpType(baseNamespace, "RestClient", null, true, true));
+		phpClass.addTypeImport(new PhpType(baseNamespace, "RestClient", null, true, true, false));
 		phpClass.addConstant("PATH", servicePath);
-		phpClass.addMember(PhpVisibility.PRIVATE, loggerType, "logger", null);
+		phpClass.addMember(PhpVisibility.PRIVATE, false, loggerType, "logger", null);
 		phpClass
 			.addMethod(PhpVisibility.PUBLIC, false, "__construct", null, "$this->logger = $logger;")
 			.addParameter(new PhpParameter(loggerType, "logger"));
@@ -378,7 +384,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		if(layout.getResponseClasses().contains(method.returnType))
 		{
-			phpClass.addTypeImport(typeLib.getPhpType(method.returnType));
+			phpClass.addTypeImport(typeLib.getPhpType(method.returnType, false));
 		}
 
 		phpMethod.addBody("$path = self::PATH . \"" + method.path + "\";");
@@ -387,7 +393,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		if(method.returnType != null)
 		{
-			phpMethod.setReturnType(typeLib.getPhpType(method.returnType));
+			phpMethod.setReturnType(typeLib.getPhpType(method.returnType, false));
 		}
 	}
 
@@ -400,7 +406,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	private PhpParameter convertMethodParamToPhpParam(MethodParameter methodParam)
 	{
-		return new PhpParameter(typeLib.getPhpType(methodParam.type), methodParam.name);
+		return new PhpParameter(typeLib.getPhpType(methodParam.type, false), methodParam.name);
 	}
 
 

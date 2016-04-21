@@ -16,7 +16,7 @@ import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
 import com.misternerd.resteasytox.swift.helper.FileHelper;
-import com.misternerd.resteasytox.swift.helper.ReflectionHelper;
+import com.misternerd.resteasytox.base.ReflectionHelper;
 import com.misternerd.resteasytox.swift.helper.SwiftMarshallingHelper;
 import com.misternerd.resteasytox.swift.helper.SwiftTypeHelper;
 import com.misternerd.resteasytox.swift.objects.*;
@@ -328,7 +328,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 		{
 			boolean isStatic = Modifier.isStatic(field.getModifiers());
 			boolean isFinal = Modifier.isFinal(field.getModifiers());
-			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
+			boolean isOptional = ReflectionHelper.isNullableField(field, layout.getAnnotations());
 			boolean isAbstract = ReflectionHelper.isAbstractDto(field, layout.abstractDtos);
 			String defaultValue = getDefaultValue(field);
 
@@ -347,7 +347,7 @@ public class ResteasyToSwiftConverter extends AbstractResteasyConverter
 		{
 			boolean isStatic = Modifier.isStatic(field.getModifiers());
 			boolean isFinal = Modifier.isFinal(field.getModifiers());
-			boolean isOptional = ReflectionHelper.isOptional(field, layout.getAnnotations());
+			boolean isOptional = ReflectionHelper.isNullableField(field, layout.getAnnotations());
 			String defaultValue = getDefaultValue(field);
 
 			SwiftProperty property = new SwiftProperty(isStatic, isFinal, SwiftTypeHelper.getSwiftType(field), field.getName(), isOptional, defaultValue, supportObjC);

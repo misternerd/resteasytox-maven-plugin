@@ -17,7 +17,7 @@ public class DateHelperObject extends AbstractHelperObject
 
 	public DateHelperObject(Path outputPath, PhpNamespace namespace)
 	{
-		super(outputPath, new PhpNamespace(namespace, "dto"), "Date", new PhpType(null, "DateTime", null, true, true));
+		super(outputPath, new PhpNamespace(namespace, "dto"), "Date", new PhpType(null, "DateTime", null, true, true, false));
 
 		Set<PhpParameter> parameters = new HashSet<>();
 		parameters.add(new PhpParameter(PhpBasicType.INT, "javaTimestamp"));
