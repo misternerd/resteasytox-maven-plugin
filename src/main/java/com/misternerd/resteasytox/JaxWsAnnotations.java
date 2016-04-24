@@ -9,6 +9,10 @@ public class JaxWsAnnotations
 
 	public final Class<? extends Annotation> post;
 
+	public final Class<? extends Annotation> put;
+
+	public final Class<? extends Annotation> delete;
+
 	public final Class<? extends Annotation> path;
 
 	public final Class<? extends Annotation> consumes;
@@ -33,6 +37,8 @@ public class JaxWsAnnotations
 	{
 		this.get = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.GET");
 		this.post = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.POST");
+		this.put = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.PUT");
+		this.delete = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.DELETE");
 		this.path = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.Path");
 		this.consumes = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.Consumes");
 		this.produces = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.Produces");

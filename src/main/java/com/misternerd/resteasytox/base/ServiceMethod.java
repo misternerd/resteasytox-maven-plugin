@@ -7,9 +7,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class ServiceMethod
 {
 
-	public static enum RequestMethod
+	public enum RequestMethod
 	{
-		GET, POST;
+		POST, GET, PUT, DELETE, PATCH
 	}
 
 	public final String name;

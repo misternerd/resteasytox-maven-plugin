@@ -129,12 +129,7 @@ public class RestServiceLayout
 					continue;
 				}
 
-				RequestMethod requestMethod = RequestMethod.GET;
-
-				if (method.getAnnotation(jaxWsAnnotations.post) != null)
-				{
-					requestMethod = RequestMethod.POST;
-				}
+				RequestMethod requestMethod = getRequestMethodFromAnnotations(method);
 
 				Class<?> returnType = getServiceMethodReturnType(method);
 				String path = getValueForJaxWsAnnotation(method.getAnnotation(jaxWsAnnotations.path));
@@ -159,6 +154,25 @@ public class RestServiceLayout
 				serviceClasses.add(new ServiceClass(cls.getSimpleName(), getValueForJaxWsAnnotation(cls.getAnnotation(jaxWsAnnotations.path)), methods));
 			}
 		}
+	}
+
+
+	private RequestMethod getRequestMethodFromAnnotations(Method method)
+	{
+		if (method.getAnnotation(jaxWsAnnotations.post) != null)
+		{
+			return RequestMethod.POST;
+		}
+		else if(method.getAnnotation(jaxWsAnnotations.put) != null)
+		{
+			return RequestMethod.PUT;
+		}
+		else if(method.getAnnotation(jaxWsAnnotations.delete) != null)
+		{
+			return RequestMethod.DELETE;
+		}
+
+		return RequestMethod.GET;
 	}
 
 
@@ -234,18 +248,10 @@ public class RestServiceLayout
 
 	private boolean isCustomType(Class<?> type)
 	{
-		if(type != null
-				&& !type.isPrimitive()
-				&& type.getPackage() != null
-				&& type.getPackage().getName().startsWith(javaPackageName))
-		{
-			return true;
-		}
-		else
-		{
-//			logger.debug("This is not a DTO: " + type.getSimpleName());
-			return false;
-		}
+		return type != null
+			&& !type.isPrimitive()
+			&& type.getPackage() != null
+			&& type.getPackage().getName().startsWith(javaPackageName);
 	}
 
 
@@ -264,17 +270,17 @@ public class RestServiceLayout
 				if (List.class.isAssignableFrom(type) && types.length == 1)
 				{
 					addDtoTypeIfApplicable((Class<?>) types[0]);
-					continue fieldLoop;
+					continue;
 				}
 
 				if(Map.class.isAssignableFrom(type) && types.length == 2)
 				{
 					addDtoTypeIfApplicable((Class<?>) types[0]);
 					addDtoTypeIfApplicable((Class<?>) types[1]);
-					continue fieldLoop;
+					continue;
 				}
 			}
-			catch(ClassCastException e)
+			catch(ClassCastException ignored)
 			{
 			}
 
@@ -370,7 +376,7 @@ public class RestServiceLayout
 	}
 
 
-	public void printLayout()
+	private void printLayout()
 	{
 		StringBuilder sb = new StringBuilder();
 

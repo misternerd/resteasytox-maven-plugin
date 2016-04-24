@@ -60,6 +60,16 @@ public class RestClient extends JavascriptClass
 				.addBody("return %s;", StringUtils.uncapitalize(serviceClass.name));
 		}
 
+		addGetRequestMethod();
+		addPostRequestMethod();
+		addPutRequestMethod();
+		addDeleteRequestMethod();
+
+	}
+
+
+	private void addGetRequestMethod()
+	{
 		addMethod("getRequest")
 			.addParameter(new JavascriptParameter("path"))
 			.addParameter(new JavascriptParameter("headerParams"))
@@ -82,7 +92,11 @@ public class RestClient extends JavascriptClass
 				.addBody("\t};")
 			.addBody("}")
 			.addBody("return $.ajax(path, opts);");
+	}
 
+
+	private void addPostRequestMethod()
+	{
 		addMethod("postRequest")
 			.addParameter(new JavascriptParameter("path"))
 			.addParameter(new JavascriptParameter("headerParams"))
@@ -95,113 +109,82 @@ public class RestClient extends JavascriptClass
 			.addBody("var opts = {contentType: contentType, method: 'POST'};")
 			.addBody("if(headerParams)")
 			.addBody("{")
-				.addBody("\topts.headers = headerParams;")
+			.addBody("\topts.headers = headerParams;")
 			.addBody("}")
 			.addBody("if(data)")
 			.addBody("{")
-				.addBody("\topts.data = data.toJson(false);")
+			.addBody("\topts.data = data.toJson(false);")
 			.addBody("}")
 			.addBody("if(resultType == 'application/json' && resultObject)")
 			.addBody("{")
-				.addBody("\topts.converters = {")
-					.addBody("\t\t'text json': function(jsonString)")
-					.addBody("\t\t{")
-						.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
-					.addBody("\t\t}")
-				.addBody("\t};")
+			.addBody("\topts.converters = {")
+			.addBody("\t\t'text json': function(jsonString)")
+			.addBody("\t\t{")
+			.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
+			.addBody("\t\t}")
+			.addBody("\t};")
 			.addBody("}")
 			.addBody("return $.ajax(path, opts);");
 	}
 
 
-
-
-
-/*
- *
-var RestClient = function()
-{
-	const BASE_PATH = 'http://localhost:8080/';
-
-	var self = this;
-
-
-	function replacePathParamsInPath(path, pathParams)
+	private void addPutRequestMethod()
 	{
-		for(var paramName in pathParams)
-		{
-			path = path.replace('{' + paramName + '}', pathParams[paramName]);
-		}
-
-		return path;
+		addMethod("putRequest")
+			.addParameter(new JavascriptParameter("path"))
+			.addParameter(new JavascriptParameter("headerParams"))
+			.addParameter(new JavascriptParameter("pathParams"))
+			.addParameter(new JavascriptParameter("data"))
+			.addParameter(new JavascriptParameter("contentType"))
+			.addParameter(new JavascriptParameter("resultType"))
+			.addParameter(new JavascriptParameter("resultObject"))
+			.addBody("path = replacePathParamsInPath(path, pathParams);")
+			.addBody("var opts = {contentType: contentType, method: 'PUT'};")
+			.addBody("if(headerParams)")
+			.addBody("{")
+			.addBody("\topts.headers = headerParams;")
+			.addBody("}")
+			.addBody("if(data)")
+			.addBody("{")
+			.addBody("\topts.data = data.toJson(false);")
+			.addBody("}")
+			.addBody("if(resultType == 'application/json' && resultObject)")
+			.addBody("{")
+			.addBody("\topts.converters = {")
+			.addBody("\t\t'text json': function(jsonString)")
+			.addBody("\t\t{")
+			.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
+			.addBody("\t\t}")
+			.addBody("\t};")
+			.addBody("}")
+			.addBody("return $.ajax(path, opts);");
 	}
 
 
-	function decodeDataToObject(data, type, resultObject)
+	private void addDeleteRequestMethod()
 	{
-		if(!data || !resultObject || type != 'json')
-		{
-			return data;
-		}
-
-		return resultObject.fromJson(data);
+		addMethod("deleteRequest")
+			.addParameter(new JavascriptParameter("path"))
+			.addParameter(new JavascriptParameter("headerParams"))
+			.addParameter(new JavascriptParameter("pathParams"))
+			.addParameter(new JavascriptParameter("contentType"))
+			.addParameter(new JavascriptParameter("resultType"))
+			.addParameter(new JavascriptParameter("resultObject"))
+			.addBody("path = replacePathParamsInPath(path, pathParams);")
+			.addBody("var opts = {contentType: contentType, method: 'DELETE'};")
+			.addBody("if(headerParams) {")
+			.addBody("\topts.headers = headerParams;")
+			.addBody("}")
+			.addBody("if(resultType == 'application/json' && resultObject)")
+			.addBody("{")
+			.addBody("\topts.converters = {")
+			.addBody("\t\t'text json': function(jsonString)")
+			.addBody("\t\t{")
+			.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
+			.addBody("\t\t}")
+			.addBody("\t};")
+			.addBody("}")
+			.addBody("return $.ajax(path, opts);");
 	}
 
-
-	this.getRequest = function(path, headerParams, pathParams, contentType, resultType, resultObject)
-	{
-		path = replacePathParamsInPath(path, pathParams);
-		var opts = {
-			contentType: contentType,
-			method: 'GET'
-		};
-
-		if(headerParams)
-		{
-			opts.headers = headerParams;
-		}
-
-		if(resultType == 'application/json' && resultObject)
-		{
-			opts.dataFilter = function(data, type)
-			{
-				return decodeDataToObject(data, type, resultObject);
-			};
-		}
-
-		return $.ajax(path, opts);
-	};
-
-
-	this.postRequest = function(path, headerParams, pathParams, data, contentType, resultObject)
-	{
-		path = replacePathParamsInPath(path, pathParams);
-		var opts = {
-			contentType: contentType,
-			method: 'POST'
-		};
-
-		if(headerParams)
-		{
-			opts.headers = headerParams;
-		}
-
-		if(data)
-		{
-			opts.data = data;
-		}
-
-		if(resultType == 'application/json' && resultObject)
-		{
-			opts.dataFilter = function(data, type)
-			{
-				return decodeDataToObject(data, type, resultObject);
-			};
-		}
-
-		return $.ajax(path, opts);
-	};
-
-};
- */
 }

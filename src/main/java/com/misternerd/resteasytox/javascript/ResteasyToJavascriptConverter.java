@@ -19,6 +19,8 @@ import com.misternerd.resteasytox.base.ServiceMethod.RequestMethod;
 import com.misternerd.resteasytox.javascript.helper.RestClient;
 import com.misternerd.resteasytox.javascript.objects.*;
 
+import static com.misternerd.resteasytox.base.ServiceMethod.RequestMethod.*;
+
 
 public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 {
@@ -255,21 +257,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			}
 		}
 
-		if(RequestMethod.POST.equals(serviceMethod.httpMethod))
-		{
-			method.addBody("var request = restClient.postRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
-					serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType,
-					returnType);
-			method.addBody("return request;");
-		}
-		else
-		{
-			method.addBody("var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, '%s', '%s', %s);",
-					serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType,
-					returnType);
-			method.addBody("return request;");
-		}
-
+		createHttpMethodCall(serviceMethod, method, returnType);
 	}
 
 
@@ -283,6 +271,27 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			paramName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, paramName);
 		}
 		return paramName;
+	}
+
+
+	private void createHttpMethodCall(ServiceMethod serviceMethod, JavascriptMethod method, String returnType)
+	{
+		String httpMethodName = serviceMethod.httpMethod.name().toLowerCase();
+
+		// GET requires no body
+		if(GET == serviceMethod.httpMethod)
+		{
+			method.addBody("var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, '%s', '%s', %s);",
+				serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			method.addBody("return request;");
+		}
+		// POST, PUT and DELETE allow a body
+		else
+		{
+			method.addBody("var request = restClient.%sRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
+				httpMethodName, serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			method.addBody("return request;");
+		}
 	}
 
 
