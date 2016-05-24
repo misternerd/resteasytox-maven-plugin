@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import com.misternerd.resteasytox.base.ReflectionHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.maven.plugin.logging.Log;
 
 import com.misternerd.resteasytox.AbstractResteasyConverter;
@@ -430,22 +431,24 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		phpMethod.addBody("];");
 
-		if(method.httpMethod == RequestMethod.GET)
+		String methodName = StringUtils.capitalize(method.httpMethod.toString().toLowerCase());
+
+		if(method.httpMethod == RequestMethod.GET || method.httpMethod == RequestMethod.DELETE)
 		{
-			phpMethod.addBody(String.format("$response = $this->createGetRequest($path, $pathParams, $headerParams, '%s', '%s')->send();",
-					method.requestContentType, method.responseContentType));
+			phpMethod.addBody(String.format("$response = $this->create%sRequest($path, $pathParams, $headerParams, '%s', '%s')->send();",
+				methodName, method.requestContentType, method.responseContentType));
 		}
 		else
 		{
 			if(method.bodyParam != null && layout.getRequestClasses().contains(method.bodyParam.type))
 			{
-				phpMethod.addBody(String.format("$response = $this->createPostRequest($path, $pathParams, $headerParams, '%s', '%s', $%s)->send();",
-						method.requestContentType, method.responseContentType, StringUtils.uncapitalize(method.bodyParam.name)));
+				phpMethod.addBody(String.format("$response = $this->create%sRequest($path, $pathParams, $headerParams, '%s', '%s', $%s)->send();",
+					methodName, method.requestContentType, method.responseContentType, StringUtils.uncapitalize(method.bodyParam.name)));
 			}
 			else
 			{
-				phpMethod.addBody(String.format("$response = $this->createPostRequest($path, $pathParams, $headerParams, '%s', '%s', null)->send();",
-						method.requestContentType, method.responseContentType));
+				phpMethod.addBody(String.format("$response = $this->create%sRequest($path, $pathParams, $headerParams, '%s', '%s', null)->send();",
+					methodName, method.requestContentType, method.responseContentType));
 			}
 		}
 	}

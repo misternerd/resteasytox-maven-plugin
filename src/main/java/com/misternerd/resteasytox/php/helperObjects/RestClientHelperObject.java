@@ -29,8 +29,10 @@ public class RestClientHelperObject extends AbstractHelperObject
 
 		PhpMethod initMethod = createInitMethod();
 		addServicesToClass(serviceClasses, initMethod);
+		addDeleteMethod();
 		addGetMethod();
 		addPostMethod();
+		addPutMethod();
 		createGenerateUrlMethod();
 		createJsonToObjectMethod();
 	}
@@ -63,6 +65,32 @@ public class RestClientHelperObject extends AbstractHelperObject
 			phpClass.addMethod(PhpVisibility.PUBLIC, true, serviceName, null,
 					String.format("return self::$%s;", serviceName));
 		}
+	}
+
+
+	/**
+	 * Delete supports no body as Httpful doesn't support it
+	 */
+	private void addDeleteMethod()
+	{
+		PhpMethod method = phpClass.addMethod(PhpVisibility.PROTECTED, false, "createDeleteRequest", null, null);
+		method.addParameter(new PhpParameter(PhpBasicType.STRING, "path"));
+		method.addParameter(new PhpParameter(PhpBasicType.ARRAY, "pathParams"));
+		method.addParameter(new PhpParameter(PhpBasicType.ARRAY, "headerParams"));
+		method.addParameter(new PhpParameter(PhpBasicType.STRING, "requestType"));
+		method.addParameter(new PhpParameter(PhpBasicType.STRING, "responseType"));
+
+		method.addBody("$url = self::createUrlFromPathAndParams($path, $pathParams);");
+		method.addBody("$request = \\Httpful\\Request::delete($url)")
+			.addBody("\t->contentType($requestType)")
+			.addBody("\t->expects($responseType);");
+
+		method.addBody("foreach($headerParams as $paramName => $paramValue)")
+			.addBody("{")
+			.addBody("\t$request->addHeader($paramName, $paramValue);")
+			.addBody("}");
+
+		method.addBody("return $request;");
 	}
 
 
@@ -113,6 +141,36 @@ public class RestClientHelperObject extends AbstractHelperObject
 			.addBody("foreach($headerParams as $paramName => $paramValue)")
 			.addBody("{")
 				.addBody("\t$request->addHeader($paramName, $paramValue);")
+			.addBody("}")
+
+			.addBody("return $request;");
+	}
+
+
+	private void addPutMethod()
+	{
+		phpClass.addMethod(PhpVisibility.PROTECTED, false, "createPutRequest", null, null)
+			.addParameter(new PhpParameter(PhpBasicType.STRING, "path"))
+			.addParameter(new PhpParameter(PhpBasicType.ARRAY, "pathParams"))
+			.addParameter(new PhpParameter(PhpBasicType.ARRAY, "headerParams"))
+			.addParameter(new PhpParameter(PhpBasicType.STRING, "requestType"))
+			.addParameter(new PhpParameter(PhpBasicType.STRING, "responseType"))
+			.addParameter(new PhpParameter(PhpBasicType.MIXED, "body", "null"))
+
+			.addBody("$url = self::createUrlFromPathAndParams($path, $pathParams);")
+
+			.addBody("if($body != null)")
+			.addBody("{")
+			.addBody("\t$body = $body->toJson();")
+			.addBody("}")
+
+			.addBody("$request = \\Httpful\\Request::put($url, $body, $requestType)")
+			.addBody("\t->neverSerializePayload()")
+			.addBody("\t->expects($responseType);")
+
+			.addBody("foreach($headerParams as $paramName => $paramValue)")
+			.addBody("{")
+			.addBody("\t$request->addHeader($paramName, $paramValue);")
 			.addBody("}")
 
 			.addBody("return $request;");
