@@ -1,0 +1,17 @@
+{
+	"name": "resteasytoxclient",
+	"version": "##VERSION##",
+	"description": "Auto-generated REST client for a JAX-RS project",
+	"main": "dist/RestClient.js",
+	"keywords": [
+		"restclient",
+		"JAX-RS"
+	],
+	"author": "ResteasyToX Code Generator",
+	"license": "Apache License, Version 2.0",
+	"homepage": "https://github.com/misternerd/resteasytox-maven-plugin",
+	"peerDependencies": {
+		"jquery": "~2.1.4"
+	},
+	"typings": "dist/RestClient.d.ts"
+}

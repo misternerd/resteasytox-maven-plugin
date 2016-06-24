@@ -1,26 +1,33 @@
 package com.misternerd.resteasytox.javascript.objects;
 
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+
 public class JavascriptParameter
 {
+
+	public final JavascriptType type;
 
 	public final String name;
 
 
-	public JavascriptParameter(String name)
+	public JavascriptParameter(JavascriptType type, String name)
 	{
 		this.name = name;
+		this.type = type;
 	}
 
 
 	public JavascriptParameter(JavascriptPrivateMember member)
 	{
+		this.type = member.type;
 		this.name = "_" + member.name;
 	}
 
 
 	public JavascriptParameter(JavascriptPublicMember member)
 	{
+		this.type = member.type;
 		this.name = "_" + member.name;
 	}
 

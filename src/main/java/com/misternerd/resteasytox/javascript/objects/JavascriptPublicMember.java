@@ -1,7 +1,11 @@
 package com.misternerd.resteasytox.javascript.objects;
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+
 public class JavascriptPublicMember extends AbstractJavascriptObject
 {
+
+	public final JavascriptType type;
 
 	public final String name;
 
@@ -10,16 +14,18 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 	public final boolean noInitialization;
 
 
-	protected JavascriptPublicMember(String name)
+	protected JavascriptPublicMember(JavascriptType type, String name)
 	{
+		this.type = type;
 		this.name = name;
 		this.value = null;
 		this.noInitialization = false;
 	}
 
 
-	public JavascriptPublicMember(String name, String value, boolean escapeContent, boolean noInitialization)
+	public JavascriptPublicMember(JavascriptType type, String name, String value, boolean escapeContent, boolean noInitialization)
 	{
+		this.type = type;
 		this.name = name;
 
 		if(value != null && escapeContent)
@@ -31,8 +37,9 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 	}
 
 
-	protected JavascriptPublicMember(String name, int value)
+	protected JavascriptPublicMember(JavascriptType type, String name, int value)
 	{
+		this.type = type;
 		this.name = name;
 		this.value = Integer.toString(value);
 		this.noInitialization = false;

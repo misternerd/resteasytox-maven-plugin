@@ -1,5 +1,8 @@
 package com.misternerd.resteasytox.javascript.objects;
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+
 public class InitMembersMethod extends JavascriptMethod
 {
 
@@ -8,7 +11,7 @@ public class InitMembersMethod extends JavascriptMethod
 
 	public InitMembersMethod(JavascriptClass jsClass)
 	{
-		super("init");
+		super("init", new JavascriptType(jsClass.name));
 		this.jsClass = jsClass;
 	}
 

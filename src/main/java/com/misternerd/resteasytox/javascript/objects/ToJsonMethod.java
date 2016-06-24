@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.misternerd.resteasytox.RestServiceLayout;
 import com.misternerd.resteasytox.base.AbstractDto;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 
 public class ToJsonMethod extends JavascriptMethod
 {
@@ -16,11 +17,11 @@ public class ToJsonMethod extends JavascriptMethod
 
 	public ToJsonMethod(Class<?> javaClass, List<Field> members, RestServiceLayout layout)
 	{
-		super("toJson");
+		super("toJson", JavascriptBasicType.STRING);
 		this.javaClass = javaClass;
 		this.layout = layout;
 
-		addParameter(new JavascriptParameter("dontEncode"));
+		addParameter(new JavascriptParameter(JavascriptBasicType.BOOLEAN, "dontEncode"));
 		addBody("var result = {};");
 		addLine();
 

@@ -1,5 +1,6 @@
 package com.misternerd.resteasytox.javascript.objects;
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 import org.apache.commons.lang3.StringUtils;
 
 public class JavascriptGetter extends JavascriptMethod
@@ -7,9 +8,9 @@ public class JavascriptGetter extends JavascriptMethod
 
 	protected JavascriptGetter(JavascriptPrivateMember member)
 	{
-		super(member.name);
+		super(member.name, member.type);
 
-		if ("bool".equalsIgnoreCase(member.name))
+		if (JavascriptBasicType.BOOLEAN.equals(member.type))
 		{
 			this.name = "is" + StringUtils.capitalize(member.name);
 		}

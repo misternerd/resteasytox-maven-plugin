@@ -1,5 +1,7 @@
 package com.misternerd.resteasytox.javascript.objects;
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,14 +12,17 @@ public class JavascriptMethod extends AbstractJavascriptObject
 
 	public String name;
 
+	public final JavascriptType returnType;
+
 	public final Set<JavascriptParameter> parameters = new LinkedHashSet<>();
 
 	private final List<String> body = new ArrayList<>();
 
 
-	protected JavascriptMethod(String name)
+	protected JavascriptMethod(String name, JavascriptType returnType)
 	{
 		this.name = name;
+		this.returnType = returnType;
 	}
 
 

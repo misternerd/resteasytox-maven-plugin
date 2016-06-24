@@ -29,6 +29,7 @@ import com.misternerd.resteasytox.base.ServiceMethod.RequestMethod;
 import com.misternerd.resteasytox.base.ServiceMethodComparator;
 
 import edu.emory.mathcs.backport.java.util.Collections;
+import org.apache.maven.project.MavenProject;
 
 /**
  * This class reads in all the relevant data via reflections and provides
@@ -38,6 +39,8 @@ public class RestServiceLayout
 {
 
 	private final Log logger;
+
+	public final MavenProject mavenProject;
 
 	private final String javaPackageName;
 
@@ -58,9 +61,10 @@ public class RestServiceLayout
 	public final Map<Class<?>, AbstractDto> abstractDtos = new HashMap<>();
 
 
-	public RestServiceLayout(Log log, String javaPackageName, JaxWsAnnotations annotations, List<Class<?>> serviceClassList)
+	public RestServiceLayout(Log log, MavenProject mavenProject, String javaPackageName, JaxWsAnnotations annotations, List<Class<?>> serviceClassList)
 	{
 		this.logger = log;
+		this.mavenProject = mavenProject;
 		this.javaPackageName = javaPackageName;
 		this.jaxWsAnnotations = annotations;
 		this.serviceClassList = serviceClassList;

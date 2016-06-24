@@ -60,6 +60,9 @@ public class ResttoxMojo extends AbstractMojo
 	@Parameter(property = "javascriptOutputPath", defaultValue = "/tmp/javascript")
 	private String javascriptOutputPath;
 
+	@Parameter(property = "javascriptNamespace", defaultValue = "RestClient")
+	private String javascriptNamespace;
+
 	@Parameter(property = "convertToSwift", defaultValue = "false")
 	private boolean convertToSwift;
 
@@ -100,7 +103,7 @@ public class ResttoxMojo extends AbstractMojo
 			JaxWsAnnotations annotations = new JaxWsAnnotations(classLoader);
 			List<Class<?>> serviceClasses = loadServicesClasses(classLoader);
 
-			RestServiceLayout serviceLayout = new RestServiceLayout(logger, javaPackageName, annotations, serviceClasses);
+			RestServiceLayout serviceLayout = new RestServiceLayout(logger, project, javaPackageName, annotations, serviceClasses);
 			loadAdditionalDtoClasses(classLoader, serviceLayout);
 			serviceLayout.readLayoutFromReflection(printLayout);
 
@@ -117,7 +120,7 @@ public class ResttoxMojo extends AbstractMojo
 			{
 				logger.debug("Converting REST API to Javascript with target dir = " + javascriptOutputPath);
 				Path outputPath = verifyOrCreatePath(javascriptOutputPath);
-				ResteasyToJavascriptConverter converter = new ResteasyToJavascriptConverter(outputPath, javaPackageName, serviceLayout);
+				ResteasyToJavascriptConverter converter = new ResteasyToJavascriptConverter(outputPath, javaPackageName, serviceLayout, javascriptNamespace);
 				converter.convert();
 			}
 

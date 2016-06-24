@@ -1,13 +1,5 @@
 package com.misternerd.resteasytox.javascript;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
 import com.google.common.base.CaseFormat;
 import com.misternerd.resteasytox.AbstractResteasyConverter;
 import com.misternerd.resteasytox.RestServiceLayout;
@@ -15,19 +7,53 @@ import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.base.MethodParameter;
 import com.misternerd.resteasytox.base.ServiceClass;
 import com.misternerd.resteasytox.base.ServiceMethod;
-import com.misternerd.resteasytox.base.ServiceMethod.RequestMethod;
+import com.misternerd.resteasytox.javascript.helper.MetaDataGenerator;
 import com.misternerd.resteasytox.javascript.helper.RestClient;
 import com.misternerd.resteasytox.javascript.objects.*;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+import org.apache.commons.io.FileUtils;
 
-import static com.misternerd.resteasytox.base.ServiceMethod.RequestMethod.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.misternerd.resteasytox.base.ServiceMethod.RequestMethod.GET;
 
 
 public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 {
 
-	public ResteasyToJavascriptConverter(Path outputPath, String javaPackageName, RestServiceLayout layout)
+	private final Set<Path> generatedJavascriptFiles = new HashSet<>();
+
+	private final Set<Path> generatedTypingFiles = new HashSet<>();
+
+	private final Path sourceOutputPath;
+
+	private final Path distOutputPath;
+
+	private final JavascriptTypeConverter typeConverter;
+
+	private final String namespace;
+
+
+	public ResteasyToJavascriptConverter(Path outputPath, String javaPackageName, RestServiceLayout layout, String namespace)
 	{
 		super(outputPath, javaPackageName, layout);
+		this.sourceOutputPath = Paths.get(outputPath.toString(), "src");
+		this.distOutputPath = Paths.get(outputPath.toString(), "dist");
+		this.typeConverter = new JavascriptTypeConverter(layout);
+		this.namespace = namespace;
 	}
 
 
@@ -39,17 +65,37 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			Files.createDirectories(outputPath);
 		}
 
+		deleteDirectoryIfExists(this.sourceOutputPath);
+		deleteDirectoryIfExists(this.distOutputPath);
+		Files.createDirectories(this.sourceOutputPath);
+		Files.createDirectories(this.distOutputPath);
+
 		generateHelperObjects();
 		generateRequestObjects();
 		generateResponseObjects();
 		generateDtos();
 		generateServiceClasses();
+		generateMetadataFiles();
+		combineGeneratedJavascriptFiles();
+		combineGeneratedTypingFiles();
+	}
+
+
+	private void deleteDirectoryIfExists(Path path) throws IOException
+	{
+		if(Files.isDirectory(path))
+		{
+			FileUtils.deleteDirectory(path.toFile());
+		}
 	}
 
 
 	private void generateHelperObjects() throws IOException
 	{
-		new RestClient(outputPath, layout).writeToFile();
+		RestClient restClient = new RestClient(sourceOutputPath, namespace, layout);
+		restClient.writeToFile();
+		generatedJavascriptFiles.add(restClient.getJavascriptOutputFile());
+		generatedTypingFiles.add(restClient.getTypingOutputFile());
 	}
 
 
@@ -57,13 +103,13 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	{
 		for (Class<?> cls : layout.getRequestClasses())
 		{
-			JavascriptClass jsClass = new JavascriptClass(getOutputPathFromJavaPackage(cls), cls.getSimpleName());
+			JavascriptClass jsClass = new JavascriptClass(getOutputPathFromJavaPackage(cls), namespace, cls.getSimpleName());
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, true);
 
 			writePublicClassConstants(cls, jsClass);
 			writePrivateAndProtectedFields(jsClass, fields);
 			jsClass.addMemberInitMethod();
-			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
+			jsClass.addMethod(new InitFromJsonMethod(jsClass, fields, layout));
 			jsClass.addMethod(new InitFromDataMethod(jsClass));
 			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
 			writePublicGettersAndSetters(jsClass, fields);
@@ -77,13 +123,13 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	{
 		for (Class<?> cls : layout.getResponseClasses())
 		{
-			JavascriptClass jsClass = new JavascriptClass(getOutputPathFromJavaPackage(cls), cls.getSimpleName());
+			JavascriptClass jsClass = new JavascriptClass(getOutputPathFromJavaPackage(cls), namespace, cls.getSimpleName());
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, true);
 
 			writePublicClassConstants(cls, jsClass);
 			writePrivateAndProtectedFields(jsClass, fields);
 			jsClass.addMemberInitMethod();
-			jsClass.addMethod(new InitFromJsonMethod(fields, layout));
+			jsClass.addMethod(new InitFromJsonMethod(jsClass, fields, layout));
 			jsClass.addMethod(new InitFromDataMethod(jsClass));
 			writePublicGettersAndSetters(jsClass, fields);
 			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
@@ -97,7 +143,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	{
 		for (Class<?> cls : layout.getDtoClasses())
 		{
-			JavascriptClass jsClass = new JavascriptClass(getOutputPathFromJavaPackage(cls), cls.getSimpleName());
+			JavascriptClass jsClass = new JavascriptClass(getOutputPathFromJavaPackage(cls), namespace, cls.getSimpleName());
 			List<Field> fields = getPrivateAndProtectedMemberVariables(cls, true);
 			List<Field> enumConstants = getEnumConstants(cls);
 
@@ -110,7 +156,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 				addInheritanceInfoToDto(cls, jsClass);
 				writePrivateAndProtectedFields(jsClass, fields);
 				jsClass.addMemberInitMethod();
-				jsClass.addMethod(new InitFromJsonMethod(fields, layout));
+				jsClass.addMethod(new InitFromJsonMethod(jsClass, fields, layout));
 				jsClass.addMethod(new InitFromDataMethod(jsClass));
 				writePublicGettersAndSetters(jsClass, fields);
 				jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
@@ -131,14 +177,14 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			jsClass.addPublicConstant(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
 		}
 
-		jsClass.addPublicMember("value");
+		jsClass.addPublicMember(JavascriptBasicType.STRING, "value");
 		jsClass.addMethod(new InitMembersMethod(jsClass));
-		jsClass.addMethod("initFromJson")
-			.addParameter(new JavascriptParameter("jsonData"))
+		jsClass.addMethod("initFromJson", new JavascriptType(cls.getSimpleName()))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "jsonData"))
 			.addBody("self.value = jsonData;")
 			.addBody("return self;");
-		jsClass.addMethod("toJson")
-			.addParameter(new JavascriptParameter("dontEncode"))
+		jsClass.addMethod("toJson", JavascriptBasicType.STRING)
+			.addParameter(new JavascriptParameter(JavascriptBasicType.BOOLEAN, "dontEncode"))
 			.addBody("if(dontEncode)")
 			.addBody("{")
 				.addBody("\treturn value;")
@@ -158,9 +204,12 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 			for(String implementingClassName : abstractDto.implementingClassesByTypeName.keySet())
 			{
-				if(abstractDto.implementingClassesByTypeName.get(implementingClassName).equals(cls))
+				Class<?> implementingClass = abstractDto.implementingClassesByTypeName.get(implementingClassName);
+
+				if(implementingClass.equals(cls))
 				{
-					jsClass.addPublicMember(new JavascriptPublicMember(abstractDto.typeInfoField, implementingClassName, true, true));
+					JavascriptType type = typeConverter.getJavascriptType(implementingClass);
+					jsClass.addPublicMember(new JavascriptPublicMember(type, abstractDto.typeInfoField, implementingClassName, true, true));
 				}
 			}
 		}
@@ -171,7 +220,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	{
 		for (ServiceClass serviceClass : layout.getServiceClasses())
 		{
-			JavascriptClass jsClass = new JavascriptClass(getFilenameForAddedString(serviceClass.path, serviceClass.name + ".js"), serviceClass.name);
+			JavascriptClass jsClass = new JavascriptClass(getFilenameForAddedString(serviceClass.path, serviceClass.name + ".js"), namespace, serviceClass.name);
 
 			writeServiceHeader(jsClass, serviceClass.name, serviceClass.path);
 
@@ -188,13 +237,13 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	private void writeServiceHeader(JavascriptClass jsClass, String name, String path)
 	{
 		jsClass.addPrivateConstant("PATH", path);
-		jsClass.addConstructorParam(new JavascriptParameter("restClient"));
+		jsClass.addConstructorParam(new JavascriptParameter(new JavascriptType("RestClient"), "restClient"));
 	}
 
 
 	private void writeServiceMethod(JavascriptClass jsClass, ServiceMethod serviceMethod)
 	{
-		JavascriptMethod method = jsClass.addMethod(serviceMethod.name);
+		JavascriptMethod method = jsClass.addMethod(serviceMethod.name, new JavascriptType("JQueryXHR"));
 
 		if(!serviceMethod.headerParams.isEmpty())
 		{
@@ -226,17 +275,20 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 		for(MethodParameter param : serviceMethod.headerParams)
 		{
-			method.addParameter(new JavascriptParameter(convertParamNameToCorrectFormat(param)));
+			JavascriptType type = typeConverter.getJavascriptType(param.type);
+			method.addParameter(new JavascriptParameter(type, convertParamNameToCorrectFormat(param)));
 		}
 
 		for(MethodParameter param : serviceMethod.pathParams)
 		{
-			method.addParameter(new JavascriptParameter(convertParamNameToCorrectFormat(param)));
+			JavascriptType type = typeConverter.getJavascriptType(param.type);
+			method.addParameter(new JavascriptParameter(type, convertParamNameToCorrectFormat(param)));
 		}
 
 		if(serviceMethod.bodyParam != null)
 		{
-			method.addParameter(new JavascriptParameter("bodyData"));
+			JavascriptType type = typeConverter.getJavascriptType(serviceMethod.bodyParam.type);
+			method.addParameter(new JavascriptParameter(type, "bodyData"));
 		}
 		else
 		{
@@ -253,7 +305,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			}
 			else if(layout.getResponseClasses().contains(serviceMethod.returnType))
 			{
-				returnType = "new " + serviceMethod.returnType.getSimpleName() + "()";
+				returnType = String.format("new %s.%s()", namespace, serviceMethod.returnType.getSimpleName());
 			}
 		}
 
@@ -320,7 +372,8 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	{
 		for (Field field : fields)
 		{
-			jsClass.addPublicMember(field.getName());
+			JavascriptType type = typeConverter.getJavascriptType(field);
+			jsClass.addPublicMember(type, field.getName());
 		}
 	}
 
@@ -337,27 +390,101 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	private Path getOutputPathFromJavaPackage(Class<?> cls) throws IOException
 	{
 		String pathExtended = cls.getPackage().getName().replace(javaPackageName, "").replace(".", File.separator);
-		Path outputPath = Paths.get(this.outputPath.toString(), pathExtended);
+		Path outputPath = Paths.get(this.sourceOutputPath.toString(), pathExtended);
 
 		if (!Files.isDirectory(outputPath))
 		{
 			Files.createDirectories(outputPath);
 		}
 
-		return Paths.get(outputPath.toString(), cls.getSimpleName() + ".js");
+		Path javascriptFile = Paths.get(outputPath.toString(), cls.getSimpleName() + ".js");
+		Path typingFile = Paths.get(outputPath.toString(), cls.getSimpleName() + ".d.ts");
+
+		generatedJavascriptFiles.add(javascriptFile);
+		generatedTypingFiles.add(typingFile);
+
+		return javascriptFile;
 	}
 
 
 	private Path getFilenameForAddedString(String added, String filename) throws IOException
 	{
-		Path outputPath = Paths.get(this.outputPath.toString(), added.split("\\/"));
+		Path outputPath = Paths.get(this.sourceOutputPath.toString(), added.split("\\/"));
 
 		if (!Files.isDirectory(outputPath))
 		{
 			Files.createDirectories(outputPath);
 		}
 
-		return Paths.get(outputPath.toString(), filename);
+		Path javascriptFile = Paths.get(outputPath.toString(), filename);
+		Path typingFile = Paths.get(outputPath.toString(), filename.replace(".js", ".d.ts"));
+
+		generatedJavascriptFiles.add(javascriptFile);
+		generatedTypingFiles.add(typingFile);
+
+		return javascriptFile;
+	}
+
+
+	private void generateMetadataFiles() throws IOException
+	{
+		new MetaDataGenerator(outputPath, layout.mavenProject).createFiles();
+	}
+
+
+	private void combineGeneratedJavascriptFiles() throws IOException
+	{
+		Path mainFile = Paths.get(distOutputPath.toString(), "RestClient.js");
+
+		try(BufferedWriter writer = Files.newBufferedWriter(mainFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW))
+		{
+			writer.write(String.format("var %s = {};\n\n", namespace));
+
+			for(Path file : generatedJavascriptFiles)
+			{
+				try(BufferedReader reader = Files.newBufferedReader(file))
+				{
+					String line;
+					while((line = reader.readLine()) != null)
+					{
+						writer.write(line + "\n");
+					}
+				}
+
+				writer.write("\n\n\n");
+			}
+		}
+	}
+
+
+	private void combineGeneratedTypingFiles() throws IOException
+	{
+		Path mainFile = Paths.get(distOutputPath.toString(), "RestClient.d.ts");
+
+		try(BufferedWriter writer = Files.newBufferedWriter(mainFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW))
+		{
+
+			writer.write(String.format("// Type definitions for resteasytoxclient v%s\n", layout.mavenProject.getVersion()));
+			writer.write("// Project: https://github.com/misternerd/resteasytox-maven-plugin\n");
+			writer.write("// Definitions by: ResteasyToX Code Generator <https://github.com/misternerd/resteasytox-maven-plugin>\n");
+			writer.write(String.format("\n\ndeclare module %s {", namespace));
+
+			for(Path file : generatedTypingFiles)
+			{
+				try(BufferedReader reader = Files.newBufferedReader(file))
+				{
+					String line;
+					while((line = reader.readLine()) != null)
+					{
+						writer.write("\n" + line);
+					}
+				}
+
+				writer.write("\n");
+			}
+
+			writer.write(String.format("}\n\nexport = %s;", namespace));
+		}
 	}
 
 }

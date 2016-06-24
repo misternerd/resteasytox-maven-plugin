@@ -1,22 +1,28 @@
 package com.misternerd.resteasytox.javascript.objects;
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+
 public class JavascriptPrivateMember extends AbstractJavascriptObject
 {
+
+	public final JavascriptType type;
 
 	public final String name;
 
 	public final String value;
 
 
-	protected JavascriptPrivateMember(String name)
+	protected JavascriptPrivateMember(JavascriptType type, String name)
 	{
+		this.type = type;
 		this.name = name;
 		this.value = null;
 	}
 
 
-	protected JavascriptPrivateMember(String name, String value, boolean escapeContent)
+	protected JavascriptPrivateMember(JavascriptType type, String name, String value, boolean escapeContent)
 	{
+		this.type = type;
 		this.name = name;
 
 		if(value != null && escapeContent)
@@ -27,8 +33,9 @@ public class JavascriptPrivateMember extends AbstractJavascriptObject
 	}
 
 
-	protected JavascriptPrivateMember(String name, int value)
+	protected JavascriptPrivateMember(JavascriptType type, String name, int value)
 	{
+		this.type = type;
 		this.name = name;
 		this.value = Integer.toString(value);
 	}

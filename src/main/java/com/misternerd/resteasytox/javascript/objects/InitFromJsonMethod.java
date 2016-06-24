@@ -8,6 +8,8 @@ import java.util.Map;
 
 import com.misternerd.resteasytox.RestServiceLayout;
 import com.misternerd.resteasytox.base.AbstractDto;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
 
 
 public class InitFromJsonMethod extends JavascriptMethod
@@ -16,9 +18,9 @@ public class InitFromJsonMethod extends JavascriptMethod
 	private final RestServiceLayout layout;
 
 
-	public InitFromJsonMethod(List<Field> members, RestServiceLayout layout)
+	public InitFromJsonMethod(JavascriptClass jsClass, List<Field> members, RestServiceLayout layout)
 	{
-		super("initFromJson");
+		super("initFromJson", new JavascriptType(jsClass.name));
 		this.layout = layout;
 		createJsonDecoder();
 
@@ -35,12 +37,12 @@ public class InitFromJsonMethod extends JavascriptMethod
 
 			if (!bodyComplete && layout.getDtoClasses().contains(cls))
 			{
-				bodyComplete = createDtoAssignment(member, memberName);
+				bodyComplete = createDtoAssignment(jsClass.namespace, member, memberName);
 			}
 
 			if(!bodyComplete && member.getGenericType() instanceof ParameterizedType)
 			{
-				bodyComplete = createParameterizedAssignment(member, memberName, cls);
+				bodyComplete = createParameterizedAssignment(jsClass.namespace, member, memberName, cls);
 			}
 
 			if(!bodyComplete)
@@ -61,7 +63,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 
 	private void createJsonDecoder()
 	{
-		addParameter(new JavascriptParameter("jsonData"));
+		addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "jsonData"));
 		addBody("if(jsonData == null)");
 		addBody("{");
 			addBody("\treturn null;");
@@ -74,7 +76,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 	}
 
 
-	private boolean createDtoAssignment(Field member, String memberName)
+	private boolean createDtoAssignment(String namespace, Field member, String memberName)
 	{
 		if(layout.abstractDtos.containsKey(member.getType()))
 		{
@@ -88,7 +90,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 					String concreteName = abstractDto.implementingClassesByTypeName.get(typeName).getSimpleName();
 					addBody("\t\tcase '%s':", typeName);
 					addBody("\t\t{");
-						addBody("\t\t\tself.%s = new %s();", memberName, concreteName);
+						addBody("\t\t\tself.%s = new %s.%s();", memberName, namespace, concreteName);
 						addBody("\t\t\tself.%s.initFromJson(jsonData['%s']);", memberName, memberName);
 						addBody("\t\t\tself.%s.TYPE = '%s';", memberName, concreteName);
 						addBody("\t\t\tbreak;");
@@ -99,7 +101,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 		else
 		{
 			String className = member.getType().getSimpleName();
-			addBody("\tself.%s = new %s();", memberName, className);
+			addBody("\tself.%s = new %s.%s();", memberName, namespace, className);
 			addBody("\tself.%s.initFromJson(jsonData['%s']);", memberName, memberName);
 		}
 
@@ -107,7 +109,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 	}
 
 
-	private boolean createParameterizedAssignment(Field member, String memberName, Class<?> cls)
+	private boolean createParameterizedAssignment(String namespace, Field member, String memberName, Class<?> cls)
 	{
 		ParameterizedType parameterized = (ParameterizedType) member.getGenericType();
 		Type[] types = parameterized.getActualTypeArguments();
@@ -118,14 +120,14 @@ public class InitFromJsonMethod extends JavascriptMethod
 
 			if(layout.getDtoClasses().contains(concreteClass))
 			{
-				createListAssignment(memberName, concreteClass);
+				createListAssignment(namespace, memberName, concreteClass);
 				return true;
 			}
 		}
 
 		if (Map.class.isAssignableFrom(cls) && types.length == 2)
 		{
-			createMapAssignment(memberName, (Class<?>) types[0], (Class<?>) types[1]);
+			createMapAssignment(namespace, memberName, (Class<?>) types[0], (Class<?>) types[1]);
 			return true;
 		}
 
@@ -133,20 +135,20 @@ public class InitFromJsonMethod extends JavascriptMethod
 	}
 
 
-	private void createListAssignment(String memberName, Class<?> concreteClass)
+	private void createListAssignment(String namespace, String memberName, Class<?> concreteClass)
 	{
 		if(layout.abstractDtos.containsKey(concreteClass))
 		{
-			createInheritanceListAssignment(memberName, concreteClass);
+			createInheritanceListAssignment(namespace, memberName, concreteClass);
 		}
 		else
 		{
-			createDefaultListAssignment(memberName, concreteClass);
+			createDefaultListAssignment(namespace, memberName, concreteClass);
 		}
 	}
 
 
-	private void createInheritanceListAssignment(String memberName, Class<?> concreteClass)
+	private void createInheritanceListAssignment(String namespace, String memberName, Class<?> concreteClass)
 	{
 		AbstractDto abstractDto = layout.abstractDtos.get(concreteClass);
 
@@ -162,7 +164,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 					String concreteName = abstractDto.implementingClassesByTypeName.get(typeName).getSimpleName();
 					addBody("\t\t\tcase '%s':", typeName);
 					addBody("\t\t\t{");
-						addBody("\t\t\t\tself.%s[i] = new %s();", memberName, concreteName);
+						addBody("\t\t\t\tself.%s[i] = new %s.%s();", memberName, namespace, concreteName);
 						addBody("\t\t\t\tself.%s[i].initFromJson(jsonData['%s'][i]);", memberName, memberName);
 						addBody("\t\t\t\tself.%s[i].TYPE = '%s';", memberName, concreteName);
 						addBody("\t\t\t\tbreak;");
@@ -173,19 +175,19 @@ public class InitFromJsonMethod extends JavascriptMethod
 	}
 
 
-	private void createDefaultListAssignment(String memberName, Class<?> concreteClass)
+	private void createDefaultListAssignment(String namespace, String memberName, Class<?> concreteClass)
 	{
 		addBody("\tself.%s = [];", memberName);
 		addLine();
 		addBody("\tfor(var i in jsonData['%s'])", memberName);
 		addBody("\t{");
-		addBody("\t\tself.%s[i] = new %s();", memberName, concreteClass.getSimpleName());
+		addBody("\t\tself.%s[i] = new %s.%s();", memberName, namespace, concreteClass.getSimpleName());
 		addBody("\t\tself.%s[i].initFromJson(jsonData['%s'][i]);", memberName, memberName);
 		addBody("\t}");
 	}
 
 
-	private void createMapAssignment(String memberName, Class<?> keyClass, Class<?> valueClass)
+	private void createMapAssignment(String namespace, String memberName, Class<?> keyClass, Class<?> valueClass)
 	{
 		//TODO add inheritance
 		addBody("\tself.%s = {};", memberName);
@@ -195,7 +197,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 
 		if(layout.getDtoClasses().contains(valueClass))
 		{
-			addBody("\t\tvar value = new %s();", valueClass.getSimpleName());
+			addBody("\t\tvar value = new %s.%s();", namespace, valueClass.getSimpleName());
 			addBody("\t\tvalue.initFromJson(jsonData['%s'][index]);", memberName);
 		}
 		else
@@ -206,6 +208,7 @@ public class InitFromJsonMethod extends JavascriptMethod
 		addBody("\t\tself.%s[index] = value;", memberName);
 		addBody("\t}");
 	}
+
 
 	private boolean createDefaultAssignment(String memberName)
 	{

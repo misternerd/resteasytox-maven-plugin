@@ -4,6 +4,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptArrayType;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
 import org.apache.commons.lang3.StringUtils;
 
 import com.misternerd.resteasytox.RestServiceLayout;
@@ -14,32 +17,51 @@ import com.misternerd.resteasytox.javascript.objects.JavascriptParameter;
 public class RestClient extends JavascriptClass
 {
 
-	public RestClient(Path outputPath, RestServiceLayout layout)
+	public RestClient(Path outputPath, String namespace, RestServiceLayout layout)
 	{
-		super(Paths.get(outputPath + File.separator + "RestClient.js"), "RestClient");
+		super(Paths.get(outputPath + File.separator + "Client.js"), namespace, "Client");
 		buildBody(layout);
 	}
 
 
 	private void buildBody(RestServiceLayout layout)
 	{
+		addConstructorParam(new JavascriptParameter(JavascriptBasicType.STRING, "restBaseUrl"));
+
 		for(ServiceClass serviceClass : layout.getServiceClasses())
 		{
-			addPrivateMember(StringUtils.uncapitalize(serviceClass.name), String.format("new %s(this)", serviceClass.name), false);
+			addPrivateMember(new JavascriptType(serviceClass.name), StringUtils.uncapitalize(serviceClass.name),
+				String.format("new %s.%s(this)", namespace, serviceClass.name), false);
 		}
 
+		addReplacePathParamsMethod();
+		addDecodeDataToObjectMethod();
+		addGettersForServiceClasses(layout);
+		addGetRequestMethod();
+		addPostRequestMethod();
+		addPutRequestMethod();
+		addDeleteRequestMethod();
+	}
+
+
+	private void addReplacePathParamsMethod()
+	{
 		addPrivateMethod("replacePathParamsInPath")
-			.addParameter(new JavascriptParameter("path"))
-			.addParameter(new JavascriptParameter("pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
 			.addBody("for(var paramName in pathParams)")
 			.addBody("{")
 				.addBody("\tpath = path.replace('{' + paramName + '}', pathParams[paramName]);")
 			.addBody("}")
-			.addBody("return REST_BASEPATH + path;");
+			.addBody("return restBaseUrl + path;");
+	}
 
+
+	private void addDecodeDataToObjectMethod()
+	{
 		addPrivateMethod("decodeDataToObject")
-			.addParameter(new JavascriptParameter("jsonString"))
-			.addParameter(new JavascriptParameter("resultObject"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "jsonString"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("try")
 			.addBody("{")
 				.addBody("\tif(!jsonString || !resultObject)")
@@ -53,30 +75,28 @@ public class RestClient extends JavascriptClass
 			.addBody("{")
 				.addBody("\tconsole.log(err);")
 			.addBody("}");
+	}
 
+
+	private void addGettersForServiceClasses(RestServiceLayout layout)
+	{
 		for(ServiceClass serviceClass : layout.getServiceClasses())
 		{
-			addMethod(StringUtils.uncapitalize(serviceClass.name))
+			addMethod(StringUtils.uncapitalize(serviceClass.name), new JavascriptType(serviceClass.name))
 				.addBody("return %s;", StringUtils.uncapitalize(serviceClass.name));
 		}
-
-		addGetRequestMethod();
-		addPostRequestMethod();
-		addPutRequestMethod();
-		addDeleteRequestMethod();
-
 	}
 
 
 	private void addGetRequestMethod()
 	{
-		addMethod("getRequest")
-			.addParameter(new JavascriptParameter("path"))
-			.addParameter(new JavascriptParameter("headerParams"))
-			.addParameter(new JavascriptParameter("pathParams"))
-			.addParameter(new JavascriptParameter("contentType"))
-			.addParameter(new JavascriptParameter("resultType"))
-			.addParameter(new JavascriptParameter("resultObject"))
+		addMethod("getRequest", JavascriptBasicType.ANY)
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING,"resultType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("path = replacePathParamsInPath(path, pathParams);")
 			.addBody("var opts = {contentType: contentType, method: 'GET'};")
 			.addBody("if(headerParams) {")
@@ -97,14 +117,14 @@ public class RestClient extends JavascriptClass
 
 	private void addPostRequestMethod()
 	{
-		addMethod("postRequest")
-			.addParameter(new JavascriptParameter("path"))
-			.addParameter(new JavascriptParameter("headerParams"))
-			.addParameter(new JavascriptParameter("pathParams"))
-			.addParameter(new JavascriptParameter("data"))
-			.addParameter(new JavascriptParameter("contentType"))
-			.addParameter(new JavascriptParameter("resultType"))
-			.addParameter(new JavascriptParameter("resultObject"))
+		addMethod("postRequest", JavascriptBasicType.ANY)
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "data"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("path = replacePathParamsInPath(path, pathParams);")
 			.addBody("var opts = {contentType: contentType, method: 'POST'};")
 			.addBody("if(headerParams)")
@@ -130,14 +150,14 @@ public class RestClient extends JavascriptClass
 
 	private void addPutRequestMethod()
 	{
-		addMethod("putRequest")
-			.addParameter(new JavascriptParameter("path"))
-			.addParameter(new JavascriptParameter("headerParams"))
-			.addParameter(new JavascriptParameter("pathParams"))
-			.addParameter(new JavascriptParameter("data"))
-			.addParameter(new JavascriptParameter("contentType"))
-			.addParameter(new JavascriptParameter("resultType"))
-			.addParameter(new JavascriptParameter("resultObject"))
+		addMethod("putRequest", JavascriptBasicType.ANY)
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "data"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("path = replacePathParamsInPath(path, pathParams);")
 			.addBody("var opts = {contentType: contentType, method: 'PUT'};")
 			.addBody("if(headerParams)")
@@ -163,13 +183,13 @@ public class RestClient extends JavascriptClass
 
 	private void addDeleteRequestMethod()
 	{
-		addMethod("deleteRequest")
-			.addParameter(new JavascriptParameter("path"))
-			.addParameter(new JavascriptParameter("headerParams"))
-			.addParameter(new JavascriptParameter("pathParams"))
-			.addParameter(new JavascriptParameter("contentType"))
-			.addParameter(new JavascriptParameter("resultType"))
-			.addParameter(new JavascriptParameter("resultObject"))
+		addMethod("deleteRequest", JavascriptBasicType.ANY)
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("path = replacePathParamsInPath(path, pathParams);")
 			.addBody("var opts = {contentType: contentType, method: 'DELETE'};")
 			.addBody("if(headerParams) {")
@@ -185,6 +205,18 @@ public class RestClient extends JavascriptClass
 			.addBody("\t};")
 			.addBody("}")
 			.addBody("return $.ajax(path, opts);");
+	}
+
+
+	public Path getJavascriptOutputFile()
+	{
+		return jsOutputFile;
+	}
+
+
+	public Path getTypingOutputFile()
+	{
+		return tsOutputFile;
 	}
 
 }

@@ -1,5 +1,9 @@
 package com.misternerd.resteasytox.javascript.objects;
 
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptArrayType;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
+import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+
 import java.util.stream.Collectors;
 
 public class InitFromDataMethod extends JavascriptMethod
@@ -10,7 +14,7 @@ public class InitFromDataMethod extends JavascriptMethod
 
 	public InitFromDataMethod(JavascriptClass jsClass)
 	{
-		super("initFromData");
+		super("initFromData", new JavascriptType(jsClass.name));
 		this.jsClass = jsClass;
 		addAllMembersAsPrivateVariable();
 	}
@@ -23,16 +27,14 @@ public class InitFromDataMethod extends JavascriptMethod
 				.map(member -> member.name)
 				.collect(Collectors.joining("', '"));
 
-		jsClass.addPrivateMember("validFields", "['" + membersAsString + "']", false);
+		jsClass.addPrivateMember(JavascriptArrayType.STRING_ARRAY, "validFields", "['" + membersAsString + "']", false);
 	}
 
 
 	@Override
 	public void build(StringBuilder sb, int indentCount)
 	{
-		addParameter(new JavascriptParameter("data"));
-
-
+		addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "data"));
 
 		addBody("if(typeof data != 'object') {")
 			.addBody("\treturn;")

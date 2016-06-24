@@ -7,8 +7,8 @@ public class JavascriptSetter extends JavascriptMethod
 
 	protected JavascriptSetter(JavascriptPrivateMember member)
 	{
-		super("set" + StringUtils.capitalize(member.name));
-		addParameter(new JavascriptParameter("_" + member.name));
+		super("set" + StringUtils.capitalize(member.name), member.type);
+		addParameter(new JavascriptParameter(member.type, "_" + member.name));
 		addBody("%s = _%s;", member.name, member.name);
 	}
 
