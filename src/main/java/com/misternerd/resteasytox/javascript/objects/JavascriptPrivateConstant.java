@@ -1,29 +1,29 @@
 package com.misternerd.resteasytox.javascript.objects;
 
-public class JavascriptPrivateConstant extends AbstractJavascriptObject
+class JavascriptPrivateConstant extends AbstractJavascriptObject
 {
 	private final String name;
 
 	private final String value;
 
 
-	protected JavascriptPrivateConstant(String name, String value)
+	JavascriptPrivateConstant(String name, String value)
 	{
 		this.name = name;
 		this.value = "'" + value + "'";
 	}
 
 
-	protected JavascriptPrivateConstant(String name, int value)
+	@Override
+	public void buildAsJavascript(StringBuilder sb, int indentCount)
 	{
-		this.name = name;
-		this.value = Integer.toString(value);
+		sb.append("\n\n").append(getIndent(indentCount)).append("const ").append(name).append(" = ").append(value).append(";");
 	}
 
 
-	public void build(StringBuilder sb, int indentCount)
+	@Override
+	public void buildAsTypescriptTypeing(StringBuilder sb, int indentSize)
 	{
-		sb.append("\n\n").append(getIndent(indentCount)).append("const ").append(name).append(" = ").append(value).append(";");
 	}
 
 }

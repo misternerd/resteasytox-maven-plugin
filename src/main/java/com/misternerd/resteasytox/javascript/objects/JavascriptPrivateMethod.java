@@ -1,45 +1,40 @@
 package com.misternerd.resteasytox.javascript.objects;
 
-import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
-
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class JavascriptMethod extends AbstractJavascriptObject
+public class JavascriptPrivateMethod extends AbstractJavascriptObject
 {
 
 	public String name;
 
-	public final JavascriptType returnType;
-
-	public final Set<JavascriptParameter> parameters = new LinkedHashSet<>();
+	private final Set<JavascriptParameter> parameters = new LinkedHashSet<>();
 
 	private final List<String> body = new ArrayList<>();
 
 
-	protected JavascriptMethod(String name, JavascriptType returnType)
+	protected JavascriptPrivateMethod(String name)
 	{
 		this.name = name;
-		this.returnType = returnType;
 	}
 
 
-	public JavascriptMethod addBody(String line, Object... args)
+	public JavascriptPrivateMethod addBody(String line, Object... args)
 	{
 		body.add(String.format(line, args));
 		return this;
 	}
 
 
-	public JavascriptMethod addLine()
+	public JavascriptPrivateMethod addLine()
 	{
 		body.add("");
 		return this;
 	}
 
-	public JavascriptMethod addParameter(JavascriptParameter parameter)
+	public JavascriptPrivateMethod addParameter(JavascriptParameter parameter)
 	{
 		parameters.add(parameter);
 		return this;
@@ -47,12 +42,12 @@ public class JavascriptMethod extends AbstractJavascriptObject
 
 
 	@Override
-	public void build(StringBuilder sb, int indentCount)
+	public void buildAsJavascript(StringBuilder sb, int indentCount)
 	{
 		String indent = "\n" + getIndent(indentCount);
 
 		sb.append("\n\n").append(indent);
-		sb.append("this.").append(name).append(" = function(");
+		sb.append("function ").append(name).append("(");
 
 		if (!parameters.isEmpty())
 		{
@@ -68,7 +63,7 @@ public class JavascriptMethod extends AbstractJavascriptObject
 
 		for (String bodyLine : body)
 		{
-			if(bodyLine.isEmpty())
+			if(body.isEmpty())
 			{
 				sb.append("\n");
 			}
@@ -78,7 +73,13 @@ public class JavascriptMethod extends AbstractJavascriptObject
 			}
 		}
 
-		sb.append(indent).append("};");
+		sb.append(indent).append("}");
+	}
+
+
+	@Override
+	public void buildAsTypescriptTypeing(StringBuilder sb, int indentSize)
+	{
 	}
 
 }

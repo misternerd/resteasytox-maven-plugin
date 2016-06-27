@@ -82,7 +82,7 @@ public class RestClient extends JavascriptClass
 	{
 		for(ServiceClass serviceClass : layout.getServiceClasses())
 		{
-			addMethod(StringUtils.uncapitalize(serviceClass.name), new JavascriptType(serviceClass.name))
+			addPublicMethod(StringUtils.uncapitalize(serviceClass.name), new JavascriptType(serviceClass.name))
 				.addBody("return %s;", StringUtils.uncapitalize(serviceClass.name));
 		}
 	}
@@ -90,7 +90,7 @@ public class RestClient extends JavascriptClass
 
 	private void addGetRequestMethod()
 	{
-		addMethod("getRequest", JavascriptBasicType.ANY)
+		addPublicMethod("getRequest", JavascriptBasicType.ANY)
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
@@ -117,7 +117,7 @@ public class RestClient extends JavascriptClass
 
 	private void addPostRequestMethod()
 	{
-		addMethod("postRequest", JavascriptBasicType.ANY)
+		addPublicMethod("postRequest", JavascriptBasicType.ANY)
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
@@ -150,7 +150,7 @@ public class RestClient extends JavascriptClass
 
 	private void addPutRequestMethod()
 	{
-		addMethod("putRequest", JavascriptBasicType.ANY)
+		addPublicMethod("putRequest", JavascriptBasicType.ANY)
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
@@ -183,7 +183,7 @@ public class RestClient extends JavascriptClass
 
 	private void addDeleteRequestMethod()
 	{
-		addMethod("deleteRequest", JavascriptBasicType.ANY)
+		addPublicMethod("deleteRequest", JavascriptBasicType.ANY)
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))

@@ -2,7 +2,7 @@ package com.misternerd.resteasytox.javascript.objects;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class JavascriptSetter extends JavascriptMethod
+public class JavascriptSetter extends JavascriptPublicMethod
 {
 
 	protected JavascriptSetter(JavascriptPrivateMember member)

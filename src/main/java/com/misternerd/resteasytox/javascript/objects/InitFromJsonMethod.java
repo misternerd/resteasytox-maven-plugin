@@ -12,7 +12,7 @@ import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
 
 
-public class InitFromJsonMethod extends JavascriptMethod
+public class InitFromJsonMethod extends JavascriptPublicMethod
 {
 
 	private final RestServiceLayout layout;

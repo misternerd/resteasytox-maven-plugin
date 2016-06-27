@@ -11,10 +11,10 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 
 	public final String value;
 
-	public final boolean noInitialization;
+	final boolean noInitialization;
 
 
-	protected JavascriptPublicMember(JavascriptType type, String name)
+	JavascriptPublicMember(JavascriptType type, String name)
 	{
 		this.type = type;
 		this.name = name;
@@ -37,17 +37,8 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 	}
 
 
-	protected JavascriptPublicMember(JavascriptType type, String name, int value)
-	{
-		this.type = type;
-		this.name = name;
-		this.value = Integer.toString(value);
-		this.noInitialization = false;
-	}
-
-
 	@Override
-	public void build(StringBuilder sb, int indentSize)
+	public void buildAsJavascript(StringBuilder sb, int indentSize)
 	{
 		String indent = getIndent(indentSize);
 
@@ -63,6 +54,13 @@ public class JavascriptPublicMember extends AbstractJavascriptObject
 		}
 
 		sb.append(";");
+	}
+
+
+	@Override
+	public void buildAsTypescriptTypeing(StringBuilder sb, int indentSize)
+	{
+		sb.append("\n").append(getIndent(indentSize)).append(name).append(": ").append(type.name).append(";");
 	}
 
 }

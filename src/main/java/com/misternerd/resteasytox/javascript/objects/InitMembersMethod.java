@@ -1,9 +1,8 @@
 package com.misternerd.resteasytox.javascript.objects;
 
-import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
 
-public class InitMembersMethod extends JavascriptMethod
+public class InitMembersMethod extends JavascriptPublicMethod
 {
 
 	private final JavascriptClass jsClass;
@@ -17,7 +16,7 @@ public class InitMembersMethod extends JavascriptMethod
 
 
 	@Override
-	public void build(StringBuilder sb, int indentCount)
+	public void buildAsJavascript(StringBuilder sb, int indentCount)
 	{
 		for (JavascriptPublicMember member : jsClass.getPublicMembers())
 		{
@@ -32,7 +31,7 @@ public class InitMembersMethod extends JavascriptMethod
 
 		addBody("return self;");
 
-		super.build(sb, indentCount);
+		super.buildAsJavascript(sb, indentCount);
 	}
 
 }

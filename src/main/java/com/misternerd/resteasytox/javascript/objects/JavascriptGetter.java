@@ -3,7 +3,7 @@ package com.misternerd.resteasytox.javascript.objects;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 import org.apache.commons.lang3.StringUtils;
 
-public class JavascriptGetter extends JavascriptMethod
+public class JavascriptGetter extends JavascriptPublicMethod
 {
 
 	protected JavascriptGetter(JavascriptPrivateMember member)

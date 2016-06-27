@@ -6,7 +6,7 @@ import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
 
 import java.util.stream.Collectors;
 
-public class InitFromDataMethod extends JavascriptMethod
+public class InitFromDataMethod extends JavascriptPublicMethod
 {
 
 	private final JavascriptClass jsClass;
@@ -32,7 +32,7 @@ public class InitFromDataMethod extends JavascriptMethod
 
 
 	@Override
-	public void build(StringBuilder sb, int indentCount)
+	public void buildAsJavascript(StringBuilder sb, int indentCount)
 	{
 		addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "data"));
 
@@ -48,7 +48,7 @@ public class InitFromDataMethod extends JavascriptMethod
 		.addLine()
 		.addBody("return self;");
 
-		super.build(sb, indentCount);
+		super.buildAsJavascript(sb, indentCount);
 	}
 
 }

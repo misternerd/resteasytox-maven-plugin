@@ -109,10 +109,10 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			writePublicClassConstants(cls, jsClass);
 			writePrivateAndProtectedFields(jsClass, fields);
 			jsClass.addMemberInitMethod();
-			jsClass.addMethod(new InitFromJsonMethod(jsClass, fields, layout));
-			jsClass.addMethod(new InitFromDataMethod(jsClass));
-			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
-			writePublicGettersAndSetters(jsClass, fields);
+			jsClass.addPublicMethod(new InitFromJsonMethod(jsClass, fields, layout));
+			jsClass.addPublicMethod(new InitFromDataMethod(jsClass));
+			jsClass.addPublicMethod(new ToJsonMethod(cls, fields, layout));
+			writePublicGettersAndSetters(fields);
 
 			jsClass.writeToFile();
 		}
@@ -129,10 +129,10 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			writePublicClassConstants(cls, jsClass);
 			writePrivateAndProtectedFields(jsClass, fields);
 			jsClass.addMemberInitMethod();
-			jsClass.addMethod(new InitFromJsonMethod(jsClass, fields, layout));
-			jsClass.addMethod(new InitFromDataMethod(jsClass));
-			writePublicGettersAndSetters(jsClass, fields);
-			jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
+			jsClass.addPublicMethod(new InitFromJsonMethod(jsClass, fields, layout));
+			jsClass.addPublicMethod(new InitFromDataMethod(jsClass));
+			writePublicGettersAndSetters(fields);
+			jsClass.addPublicMethod(new ToJsonMethod(cls, fields, layout));
 
 			jsClass.writeToFile();
 		}
@@ -156,10 +156,10 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 				addInheritanceInfoToDto(cls, jsClass);
 				writePrivateAndProtectedFields(jsClass, fields);
 				jsClass.addMemberInitMethod();
-				jsClass.addMethod(new InitFromJsonMethod(jsClass, fields, layout));
-				jsClass.addMethod(new InitFromDataMethod(jsClass));
-				writePublicGettersAndSetters(jsClass, fields);
-				jsClass.addMethod(new ToJsonMethod(cls, fields, layout));
+				jsClass.addPublicMethod(new InitFromJsonMethod(jsClass, fields, layout));
+				jsClass.addPublicMethod(new InitFromDataMethod(jsClass));
+				writePublicGettersAndSetters(fields);
+				jsClass.addPublicMethod(new ToJsonMethod(cls, fields, layout));
 			}
 
 			jsClass.writeToFile();
@@ -178,12 +178,12 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		}
 
 		jsClass.addPublicMember(JavascriptBasicType.STRING, "value");
-		jsClass.addMethod(new InitMembersMethod(jsClass));
-		jsClass.addMethod("initFromJson", new JavascriptType(cls.getSimpleName()))
+		jsClass.addPublicMethod(new InitMembersMethod(jsClass));
+		jsClass.addPublicMethod("initFromJson", new JavascriptType(cls.getSimpleName()))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "jsonData"))
 			.addBody("self.value = jsonData;")
 			.addBody("return self;");
-		jsClass.addMethod("toJson", JavascriptBasicType.STRING)
+		jsClass.addPublicMethod("toJson", JavascriptBasicType.STRING)
 			.addParameter(new JavascriptParameter(JavascriptBasicType.BOOLEAN, "dontEncode"))
 			.addBody("if(dontEncode)")
 			.addBody("{")
@@ -222,7 +222,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		{
 			JavascriptClass jsClass = new JavascriptClass(getFilenameForAddedString(serviceClass.path, serviceClass.name + ".js"), namespace, serviceClass.name);
 
-			writeServiceHeader(jsClass, serviceClass.name, serviceClass.path);
+			writeServiceHeader(jsClass, serviceClass);
 
 			for(ServiceMethod method : serviceClass.methods)
 			{
@@ -234,16 +234,16 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	}
 
 
-	private void writeServiceHeader(JavascriptClass jsClass, String name, String path)
+	private void writeServiceHeader(JavascriptClass jsClass, ServiceClass serviceClass)
 	{
-		jsClass.addPrivateConstant("PATH", path);
+		jsClass.addPrivateConstant("PATH", serviceClass.path);
 		jsClass.addConstructorParam(new JavascriptParameter(new JavascriptType("RestClient"), "restClient"));
 	}
 
 
 	private void writeServiceMethod(JavascriptClass jsClass, ServiceMethod serviceMethod)
 	{
-		JavascriptMethod method = jsClass.addMethod(serviceMethod.name, new JavascriptType("JQueryXHR"));
+		JavascriptPublicMethod method = jsClass.addPublicMethod(serviceMethod.name, new JavascriptType("JQueryXHR"));
 
 		if(!serviceMethod.headerParams.isEmpty())
 		{
@@ -326,7 +326,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	}
 
 
-	private void createHttpMethodCall(ServiceMethod serviceMethod, JavascriptMethod method, String returnType)
+	private void createHttpMethodCall(ServiceMethod serviceMethod, JavascriptPublicMethod method, String returnType)
 	{
 		String httpMethodName = serviceMethod.httpMethod.name().toLowerCase();
 
@@ -378,7 +378,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	}
 
 
-	private void writePublicGettersAndSetters(JavascriptClass jsClass, List<Field> fields)
+	private void writePublicGettersAndSetters(List<Field> fields)
 	{
 		for (Field field : fields)
 		{

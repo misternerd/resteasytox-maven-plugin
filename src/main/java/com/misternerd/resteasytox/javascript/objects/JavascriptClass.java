@@ -34,9 +34,9 @@ public class JavascriptClass
 
 	private final Set<JavascriptPrivateMember> privateMembers = new LinkedHashSet<>();
 
-	private final List<JavascriptFunction> privateMethods = new ArrayList<>();
+	private final List<JavascriptPrivateMethod> privateMethods = new ArrayList<>();
 
-	private final List<JavascriptMethod> publicMethods = new ArrayList<>();
+	private final List<JavascriptPublicMethod> publicMethods = new ArrayList<>();
 
 
 	public JavascriptClass(Path outputPath, String namespace, String name)
@@ -56,14 +56,6 @@ public class JavascriptClass
 
 
 	public JavascriptClass addPrivateConstant(String name, String value)
-	{
-		JavascriptPrivateConstant result = new JavascriptPrivateConstant(name, value);
-		privateConstants.add(result);
-		return this;
-	}
-
-
-	public JavascriptClass addPrivateConstant(String name, int value)
 	{
 		JavascriptPrivateConstant result = new JavascriptPrivateConstant(name, value);
 		privateConstants.add(result);
@@ -102,21 +94,13 @@ public class JavascriptClass
 	}
 
 
-	public Set<JavascriptPublicMember> getPublicMembers()
+	Set<JavascriptPublicMember> getPublicMembers()
 	{
 		return publicMembers;
 	}
 
 
-	public JavascriptPrivateMember addPrivateMember(JavascriptType type, String name)
-	{
-		JavascriptPrivateMember member = new JavascriptPrivateMember(type, name);
-		privateMembers.add(member);
-		return member;
-	}
-
-
-	public JavascriptPrivateMember addPrivateMember(JavascriptType type, String name, String value, boolean escapeValue)
+	protected JavascriptPrivateMember addPrivateMember(JavascriptType type, String name, String value, boolean escapeValue)
 	{
 		JavascriptPrivateMember member = new JavascriptPrivateMember(type, name, value, escapeValue);
 		privateMembers.add(member);
@@ -124,47 +108,19 @@ public class JavascriptClass
 	}
 
 
-	public JavascriptFunction addPrivateMethod(String name)
+	protected JavascriptPrivateMethod addPrivateMethod(String name)
 	{
-		JavascriptFunction function = new JavascriptFunction(name);
+		JavascriptPrivateMethod function = new JavascriptPrivateMethod(name);
 		privateMethods.add(function);
 		return function;
 	}
 
 
-	public JavascriptMethod addMethod(String name, JavascriptType returnType)
+	public JavascriptPublicMethod addPublicMethod(String name, JavascriptType returnType)
 	{
-		JavascriptMethod method = new JavascriptMethod(name, returnType);
+		JavascriptPublicMethod method = new JavascriptPublicMethod(name, returnType);
 		publicMethods.add(method);
 		return method;
-	}
-
-
-	public void addGetter(String memberName)
-	{
-		JavascriptPrivateMember member = getMemberByName(memberName);
-		publicMethods.add(new JavascriptGetter(member));
-	}
-
-
-	public void addSetter(String memberName)
-	{
-		JavascriptPrivateMember member = getMemberByName(memberName);
-		publicMethods.add(new JavascriptSetter(member));
-	}
-
-
-	private JavascriptPrivateMember getMemberByName(String memberName)
-	{
-		for(JavascriptPrivateMember member : privateMembers)
-		{
-			if(member.name.equals(memberName))
-			{
-				return member;
-			}
-		}
-
-		throw new NullPointerException("Did not find any field named " + memberName);
 	}
 
 
@@ -174,7 +130,7 @@ public class JavascriptClass
 	}
 
 
-	public void addMethod(JavascriptMethod method)
+	public void addPublicMethod(JavascriptPublicMethod method)
 	{
 		publicMethods.add(method);
 	}
@@ -209,13 +165,18 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	{
 		for(JavascriptPrivateConstant constant : privateConstants)
 		{
-			constant.build(sb, 1);
+			constant.buildAsJavascript(sb, 1);
 		}
 	}
 
 
 	private void buildClassHeader(StringBuilder sb)
 	{
+		if(!publicConstants.isEmpty() || !privateConstants.isEmpty())
+		{
+			sb.append("\n");
+		}
+
 		sb.append("\n\n\tvar ").append(name).append(" = function(");
 		Iterator<JavascriptParameter> it = constructorParams.iterator();
 
@@ -239,7 +200,7 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	{
 		for(JavascriptPublicMember member : publicMembers)
 		{
-			member.build(sb, 2);
+			member.buildAsJavascript(sb, 2);
 		}
 	}
 
@@ -248,25 +209,25 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	{
 		for(JavascriptPrivateMember member : privateMembers)
 		{
-			member.build(sb, 2);
+			member.buildAsJavascript(sb, 2);
 		}
 	}
 
 
 	private void buildPrivateMethods(StringBuilder sb)
 	{
-		for(JavascriptFunction method : privateMethods)
+		for(JavascriptPrivateMethod method : privateMethods)
 		{
-			method.build(sb, 2);
+			method.buildAsJavascript(sb, 2);
 		}
 	}
 
 
 	private void buildPublicMethods(StringBuilder sb)
 	{
-		for(JavascriptMethod method : publicMethods)
+		for(JavascriptPublicMethod method : publicMethods)
 		{
-			method.build(sb, 2);
+			method.buildAsJavascript(sb, 2);
 		}
 	}
 
@@ -281,7 +242,7 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	{
 		for(JavascriptPublicConstant constant : publicConstants)
 		{
-			constant.build(sb, 1);
+			constant.buildAsJavascript(sb, 1);
 		}
 	}
 
@@ -297,6 +258,7 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 
 		sb.append("\n\texport class ").append(name).append(" {");
 
+		addTypescriptPublicConstants(sb);
 		addTypescriptMembers(sb);
 		addTypescriptConstructor(sb);
 		addTypescriptMethods(sb);
@@ -307,18 +269,37 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	}
 
 
+	private void addTypescriptPublicConstants(StringBuilder sb)
+	{
+		for(JavascriptPublicConstant constant : publicConstants)
+		{
+			constant.buildAsTypescriptTypeing(sb, 2);
+		}
+
+		if(!publicConstants.isEmpty())
+		{
+			sb.append("\n");
+		}
+	}
+
+
 	private void addTypescriptMembers(StringBuilder sb)
 	{
 		for(JavascriptPublicMember member : publicMembers)
 		{
-			sb.append("\n\t\t").append(member.name).append(": ").append(member.type.name).append(";");
+			member.buildAsTypescriptTypeing(sb, 2);
+		}
+
+		if(!publicMembers.isEmpty())
+		{
+			sb.append("\n");
 		}
 	}
 
 
 	private void addTypescriptConstructor(StringBuilder sb)
 	{
-		sb.append("\n\n\t\tconstructor(");
+		sb.append("\n\t\tconstructor(");
 
 		for(Iterator<JavascriptParameter> it = constructorParams.iterator(); it.hasNext(); )
 		{
@@ -337,29 +318,9 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 
 	private void addTypescriptMethods(StringBuilder sb)
 	{
-		for(JavascriptMethod method : publicMethods)
+		for(JavascriptPublicMethod method : publicMethods)
 		{
-			sb.append("\n\t\tpublic ").append(method.name).append("(");
-
-			for(Iterator<JavascriptParameter> iterator = method.parameters.iterator(); iterator.hasNext(); )
-			{
-				JavascriptParameter param = iterator.next();
-				String paramName = param.name;
-
-				if(paramName.startsWith("_"))
-				{
-					paramName = paramName.substring(1);
-				}
-
-				sb.append(paramName).append(": ").append(param.type.name);
-
-				if(iterator.hasNext())
-				{
-					sb.append(", ");
-				}
-			}
-
-			sb.append(") : ").append(method.returnType.name).append(" ;");
+			method.buildAsTypescriptTypeing(sb, 2);
 		}
 	}
 

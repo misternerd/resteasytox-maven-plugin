@@ -7,7 +7,7 @@ import com.misternerd.resteasytox.RestServiceLayout;
 import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 
-public class ToJsonMethod extends JavascriptMethod
+public class ToJsonMethod extends JavascriptPublicMethod
 {
 
 	private final Class<?> javaClass;

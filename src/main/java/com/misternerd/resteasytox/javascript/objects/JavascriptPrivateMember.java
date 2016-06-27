@@ -2,7 +2,7 @@ package com.misternerd.resteasytox.javascript.objects;
 
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
 
-public class JavascriptPrivateMember extends AbstractJavascriptObject
+class JavascriptPrivateMember extends AbstractJavascriptObject
 {
 
 	public final JavascriptType type;
@@ -12,15 +12,7 @@ public class JavascriptPrivateMember extends AbstractJavascriptObject
 	public final String value;
 
 
-	protected JavascriptPrivateMember(JavascriptType type, String name)
-	{
-		this.type = type;
-		this.name = name;
-		this.value = null;
-	}
-
-
-	protected JavascriptPrivateMember(JavascriptType type, String name, String value, boolean escapeContent)
+	JavascriptPrivateMember(JavascriptType type, String name, String value, boolean escapeContent)
 	{
 		this.type = type;
 		this.name = name;
@@ -33,16 +25,8 @@ public class JavascriptPrivateMember extends AbstractJavascriptObject
 	}
 
 
-	protected JavascriptPrivateMember(JavascriptType type, String name, int value)
-	{
-		this.type = type;
-		this.name = name;
-		this.value = Integer.toString(value);
-	}
-
-
 	@Override
-	public void build(StringBuilder sb, int indentSize)
+	public void buildAsJavascript(StringBuilder sb, int indentSize)
 	{
 		String indent = getIndent(indentSize);
 
@@ -58,6 +42,12 @@ public class JavascriptPrivateMember extends AbstractJavascriptObject
 		}
 
 		sb.append(";");
+	}
+
+
+	@Override
+	public void buildAsTypescriptTypeing(StringBuilder sb, int indentSize)
+	{
 	}
 
 }
