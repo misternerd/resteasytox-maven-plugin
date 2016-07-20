@@ -108,7 +108,6 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 			writePublicClassConstants(cls, jsClass);
 			writePrivateAndProtectedFields(jsClass, fields);
-			jsClass.addMemberInitMethod();
 			jsClass.addPublicMethod(new InitFromJsonMethod(jsClass, fields, layout));
 			jsClass.addPublicMethod(new InitFromDataMethod(jsClass));
 			jsClass.addPublicMethod(new ToJsonMethod(cls, fields, layout));
@@ -128,7 +127,6 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 			writePublicClassConstants(cls, jsClass);
 			writePrivateAndProtectedFields(jsClass, fields);
-			jsClass.addMemberInitMethod();
 			jsClass.addPublicMethod(new InitFromJsonMethod(jsClass, fields, layout));
 			jsClass.addPublicMethod(new InitFromDataMethod(jsClass));
 			writePublicGettersAndSetters(fields);
@@ -155,7 +153,6 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			{
 				addInheritanceInfoToDto(cls, jsClass);
 				writePrivateAndProtectedFields(jsClass, fields);
-				jsClass.addMemberInitMethod();
 				jsClass.addPublicMethod(new InitFromJsonMethod(jsClass, fields, layout));
 				jsClass.addPublicMethod(new InitFromDataMethod(jsClass));
 				writePublicGettersAndSetters(fields);
@@ -177,8 +174,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			jsClass.addPublicConstant(field.getName(), Enum.valueOf(enumClass, field.getName()).toString());
 		}
 
-		jsClass.addPublicMember(JavascriptBasicType.STRING, "value");
-		jsClass.addPublicMethod(new InitMembersMethod(jsClass));
+		jsClass.addPublicMember(JavascriptBasicType.STRING, "value", true);
 		jsClass.addPublicMethod("initFromJson", new JavascriptType(cls.getSimpleName()))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "jsonData"))
 			.addBody("self.value = jsonData;")
@@ -201,6 +197,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		if(cls.getSuperclass() != null && layout.abstractDtos.containsKey(cls.getSuperclass()))
 		{
 			AbstractDto abstractDto = layout.abstractDtos.get(cls.getSuperclass());
+			jsClass.setParentType(new JavascriptType(abstractDto.abstractClass.getSimpleName()));
 
 			for(String implementingClassName : abstractDto.implementingClassesByTypeName.keySet())
 			{
@@ -237,7 +234,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 	private void writeServiceHeader(JavascriptClass jsClass, ServiceClass serviceClass)
 	{
 		jsClass.addPrivateConstant("PATH", serviceClass.path);
-		jsClass.addConstructorParam(new JavascriptParameter(new JavascriptType("RestClient"), "restClient"));
+		jsClass.addConstructorParam(new JavascriptParameter(new JavascriptType(namespace + ".Client"), "restClient"));
 	}
 
 
@@ -373,7 +370,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		for (Field field : fields)
 		{
 			JavascriptType type = typeConverter.getJavascriptType(field);
-			jsClass.addPublicMember(type, field.getName());
+			jsClass.addPublicMember(type, field.getName(), true);
 		}
 	}
 

@@ -24,6 +24,8 @@ public class JavascriptClass
 
 	public final String name;
 
+	private JavascriptType parentType;
+
 	private final Set<JavascriptParameter> constructorParams = new LinkedHashSet<>();
 
 	private final Set<JavascriptPrivateConstant> privateConstants = new LinkedHashSet<>();
@@ -79,9 +81,16 @@ public class JavascriptClass
 	}
 
 
-	public JavascriptPublicMember addPublicMember(JavascriptType type, String name)
+	public JavascriptPublicMember addPublicMember(JavascriptType type, String name, boolean initInConstructor)
 	{
 		JavascriptPublicMember member = new JavascriptPublicMember(type, name);
+
+		if(initInConstructor)
+		{
+			member = new JavascriptPublicMember(type, name, "_" + name, false, false);
+			constructorParams.add(new JavascriptParameter(member));
+		}
+
 		publicMembers.add(member);
 		return member;
 	}
@@ -124,15 +133,16 @@ public class JavascriptClass
 	}
 
 
-	public void addMemberInitMethod()
-	{
-		publicMethods.add(new InitMembersMethod(this));
-	}
-
-
 	public void addPublicMethod(JavascriptPublicMethod method)
 	{
 		publicMethods.add(method);
+	}
+
+
+	public JavascriptClass setParentType(JavascriptType parentType)
+	{
+		this.parentType = parentType;
+		return this;
 	}
 
 
@@ -256,7 +266,14 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	{
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("\n\texport class ").append(name).append(" {");
+		sb.append("\n\texport class ").append(name);
+
+		if(parentType != null)
+		{
+			sb.append(" extends ").append(parentType.name);
+		}
+
+		sb.append(" {");
 
 		addTypescriptPublicConstants(sb);
 		addTypescriptMembers(sb);
@@ -304,7 +321,7 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 		for(Iterator<JavascriptParameter> it = constructorParams.iterator(); it.hasNext(); )
 		{
 			JavascriptParameter param = it.next();
-			sb.append(param.name);
+			sb.append(param.name).append(" : ").append(param.type.name);
 
 			if(it.hasNext())
 			{
