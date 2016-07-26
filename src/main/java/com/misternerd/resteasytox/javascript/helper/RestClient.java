@@ -36,6 +36,7 @@ public class RestClient extends JavascriptClass
 
 		addReplacePathParamsMethod();
 		addDecodeDataToObjectMethod();
+		addDefaultRequestMethod();
 		addGettersForServiceClasses(layout);
 		addGetRequestMethod();
 		addPostRequestMethod();
@@ -46,7 +47,7 @@ public class RestClient extends JavascriptClass
 
 	private void addReplacePathParamsMethod()
 	{
-		addPrivateMethod("replacePathParamsInPath")
+		addPrivateMethod("replacePathParamsInPath", JavascriptBasicType.STRING)
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
 			.addBody("for(var paramName in pathParams)")
@@ -59,7 +60,7 @@ public class RestClient extends JavascriptClass
 
 	private void addDecodeDataToObjectMethod()
 	{
-		addPrivateMethod("decodeDataToObject")
+		addPrivateMethod("decodeDataToObject", JavascriptBasicType.ANY)
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "jsonString"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("try")
@@ -75,6 +76,79 @@ public class RestClient extends JavascriptClass
 			.addBody("{")
 				.addBody("\tconsole.log(err);")
 			.addBody("}");
+	}
+
+
+	private void addDefaultRequestMethod()
+	{
+		addPrivateMethod("fetchRequest", JavascriptBasicType.ANY)
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "method"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "body"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
+			.addBody("path = replacePathParamsInPath(path, pathParams);")
+			.addBody("var headers = {};\n")
+			.addBody("headers['Content-Type'] = contentType;")
+			.addBody("if(headerParams != null) {")
+				.addBodyWithIndent("for(var headerName in headerParams) {", 1)
+					.addBodyWithIndent("headers[headerName] = headerParams[headerName];", 2)
+				.addBodyWithIndent("}",1)
+			.addBody("}")
+			.addBody("var fetchParams = {")
+				.addBodyWithIndent("method: method,", 1)
+				.addBodyWithIndent("headers: headers,", 1)
+				.addBodyWithIndent("mode: 'cors',", 1)
+				.addBodyWithIndent("cache: 'default'", 1)
+			.addBody("};")
+			.addBody("if(body) {")
+				.addBodyWithIndent("if(contentType == 'application/json') {", 1)
+					.addBodyWithIndent("fetchParams.body = body.toJson(false);", 2)
+				.addBodyWithIndent("}", 1)
+				.addBodyWithIndent("else {", 1)
+					.addBodyWithIndent("fetchParams.body = body;", 2)
+				.addBodyWithIndent("}", 1)
+			.addBody("}")
+			.addBody("return new Promise(function(onFulfill, onReject) {")
+				.addBodyWithIndent("fetch(path, fetchParams)", 1)
+					.addBodyWithIndent(".then(function(response) {", 2)
+						.addBodyWithIndent("if(!response.ok) {", 3)
+							.addBodyWithIndent("onReject('Received invalid HTTP status');", 4)
+							.addBodyWithIndent("return;", 4)
+						.addBodyWithIndent("}", 3)
+						.addBodyWithIndent("var receivedContentType = response.headers.get('content-type');", 3)
+						.addBodyWithIndent("if(!receivedContentType || receivedContentType.indexOf(resultType) === -1) {", 3)
+							.addBodyWithIndent("onReject('Received unexpected content type');", 4)
+							.addBodyWithIndent("return;", 4)
+						.addBodyWithIndent("}", 3)
+						.addBodyWithIndent("if(receivedContentType == 'application/json') {", 3)
+							.addBodyWithIndent("response.json().then(function(jsonData) {", 4)
+								.addBodyWithIndent("if(resultObject != null) {", 5)
+									.addBodyWithIndent("onFulfill(resultObject.initFromJson(jsonData));", 6)
+								.addBodyWithIndent("}", 5)
+								.addBodyWithIndent("else {", 5)
+									.addBodyWithIndent("onFulfill(response.json());", 6)
+								.addBodyWithIndent("}", 5)
+							.addBodyWithIndent("});", 4)
+						.addBodyWithIndent("}", 3)
+						.addBodyWithIndent("else if(receivedContentType.startsWith('text/')) {", 3)
+							.addBodyWithIndent("response.text().then(function(textData) {", 4)
+								.addBodyWithIndent("onFulfill(textData);", 5)
+							.addBodyWithIndent("});", 4)
+						.addBodyWithIndent("}", 3)
+						.addBodyWithIndent("else {", 3)
+							.addBodyWithIndent("response.blob().then(function(blobData) {", 4)
+								.addBodyWithIndent("onFulfill(blobData);", 5)
+							.addBodyWithIndent("});", 4)
+						.addBodyWithIndent("}", 3)
+					.addBodyWithIndent("})", 2)
+				.addBodyWithIndent(".catch(function(error) {", 1)
+					.addBodyWithIndent("onReject('Request yielded error=' + error);", 2)
+				.addBodyWithIndent("});", 1)
+			.addBody("});");
 	}
 
 
@@ -97,21 +171,7 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING,"resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("path = replacePathParamsInPath(path, pathParams);")
-			.addBody("var opts = {contentType: contentType, method: 'GET'};")
-			.addBody("if(headerParams) {")
-				.addBody("\topts.headers = headerParams;")
-			.addBody("}")
-			.addBody("if(resultType == 'application/json' && resultObject)")
-			.addBody("{")
-				.addBody("\topts.converters = {")
-					.addBody("\t\t'text json': function(jsonString)")
-					.addBody("\t\t{")
-						.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
-					.addBody("\t\t}")
-				.addBody("\t};")
-			.addBody("}")
-			.addBody("return $.ajax(path, opts);");
+			.addBody("return fetchRequest('GET', path, headerParams, pathParams, null, contentType, resultType, resultObject);");
 	}
 
 
@@ -121,30 +181,11 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
-			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "data"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "body"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("path = replacePathParamsInPath(path, pathParams);")
-			.addBody("var opts = {contentType: contentType, method: 'POST'};")
-			.addBody("if(headerParams)")
-			.addBody("{")
-			.addBody("\topts.headers = headerParams;")
-			.addBody("}")
-			.addBody("if(data)")
-			.addBody("{")
-			.addBody("\topts.data = data.toJson(false);")
-			.addBody("}")
-			.addBody("if(resultType == 'application/json' && resultObject)")
-			.addBody("{")
-			.addBody("\topts.converters = {")
-			.addBody("\t\t'text json': function(jsonString)")
-			.addBody("\t\t{")
-			.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
-			.addBody("\t\t}")
-			.addBody("\t};")
-			.addBody("}")
-			.addBody("return $.ajax(path, opts);");
+			.addBody("return fetchRequest('POST', path, headerParams, pathParams, body, contentType, resultType, resultObject);");
 	}
 
 
@@ -154,30 +195,11 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
-			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "data"))
+			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "body"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("path = replacePathParamsInPath(path, pathParams);")
-			.addBody("var opts = {contentType: contentType, method: 'PUT'};")
-			.addBody("if(headerParams)")
-			.addBody("{")
-			.addBody("\topts.headers = headerParams;")
-			.addBody("}")
-			.addBody("if(data)")
-			.addBody("{")
-			.addBody("\topts.data = data.toJson(false);")
-			.addBody("}")
-			.addBody("if(resultType == 'application/json' && resultObject)")
-			.addBody("{")
-			.addBody("\topts.converters = {")
-			.addBody("\t\t'text json': function(jsonString)")
-			.addBody("\t\t{")
-			.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
-			.addBody("\t\t}")
-			.addBody("\t};")
-			.addBody("}")
-			.addBody("return $.ajax(path, opts);");
+			.addBody("return fetchRequest('PUT', path, headerParams, pathParams, body, contentType, resultType, resultObject);");
 	}
 
 
@@ -190,21 +212,7 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("path = replacePathParamsInPath(path, pathParams);")
-			.addBody("var opts = {contentType: contentType, method: 'DELETE'};")
-			.addBody("if(headerParams) {")
-			.addBody("\topts.headers = headerParams;")
-			.addBody("}")
-			.addBody("if(resultType == 'application/json' && resultObject)")
-			.addBody("{")
-			.addBody("\topts.converters = {")
-			.addBody("\t\t'text json': function(jsonString)")
-			.addBody("\t\t{")
-			.addBody("\t\t\treturn decodeDataToObject(jsonString, resultObject);")
-			.addBody("\t\t}")
-			.addBody("\t};")
-			.addBody("}")
-			.addBody("return $.ajax(path, opts);");
+			.addBody("return fetchRequest('DELETE', path, headerParams, pathParams, null, contentType, resultType, resultObject);");
 	}
 
 

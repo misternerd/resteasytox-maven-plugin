@@ -240,7 +240,8 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 	private void writeServiceMethod(JavascriptClass jsClass, ServiceMethod serviceMethod)
 	{
-		JavascriptPublicMethod method = jsClass.addPublicMethod(serviceMethod.name, new JavascriptType("JQueryXHR"));
+		JavascriptType returnType = new JavascriptType("Promise<" + typeConverter.getJavascriptType(serviceMethod.returnType).name + ">");
+		JavascriptPublicMethod method = jsClass.addPublicMethod(serviceMethod.name, returnType);
 
 		if(!serviceMethod.headerParams.isEmpty())
 		{
@@ -292,21 +293,21 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			method.addBody("var bodyData = null;");
 		}
 
-		String returnType = "{}";
+		String returnValue = "{}";
 
 		if(serviceMethod.returnType != null)
 		{
 			if(serviceMethod.returnType.isArray())
 			{
-				returnType = "[]";
+				returnValue = "[]";
 			}
 			else if(layout.getResponseClasses().contains(serviceMethod.returnType))
 			{
-				returnType = String.format("new %s.%s()", namespace, serviceMethod.returnType.getSimpleName());
+				returnValue = String.format("new %s.%s()", namespace, serviceMethod.returnType.getSimpleName());
 			}
 		}
 
-		createHttpMethodCall(serviceMethod, method, returnType);
+		createHttpMethodCall(serviceMethod, method, returnValue);
 	}
 
 
@@ -435,6 +436,11 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 		try(BufferedWriter writer = Files.newBufferedWriter(mainFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW))
 		{
+			writer.write("// if running on nodejs, include polyfill\n");
+			writer.write("if(typeof fetch == 'undefined')\n{\n");
+			writer.write("\tvar fetch = require('node-fetch');\n");
+			writer.write("}\n\n");
+
 			writer.write(String.format("var %s = {};\n\n", namespace));
 
 			for(Path file : generatedJavascriptFiles)
@@ -450,6 +456,12 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 				writer.write("\n\n\n");
 			}
+
+			writer.write("\n\n// if running on nodejs, export module\n");
+			writer.write("if(typeof module != 'undefined')\n{\n");
+			writer.write(String.format("\tmodule.exports = %s;\n", namespace));
+			writer.write(String.format("\tmodule.exports.default = %s;\n", namespace));
+			writer.write("}\n");
 		}
 	}
 
