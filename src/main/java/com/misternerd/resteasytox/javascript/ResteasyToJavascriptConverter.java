@@ -141,11 +141,11 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			.addParameter(new JavascriptParameter("dontEncode"))
 			.addBody("if(dontEncode)")
 			.addBody("{")
-				.addBody("\treturn value;")
+				.addBody("\treturn self.value;")
 			.addBody("}")
 			.addBody("else")
 			.addBody("{")
-				.addBody("\treturn JSON.stringify(value);")
+				.addBody("\treturn JSON.stringify(self.value);")
 			.addBody("}");
 	}
 
