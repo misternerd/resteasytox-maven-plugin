@@ -117,7 +117,7 @@ public class JavascriptClass
 	}
 
 
-	protected JavascriptPrivateMethod addPrivateMethod(String name)
+	protected JavascriptPrivateMethod addPrivateMethod(String name, JavascriptType returnType)
 	{
 		JavascriptPrivateMethod function = new JavascriptPrivateMethod(name);
 		privateMethods.add(function);

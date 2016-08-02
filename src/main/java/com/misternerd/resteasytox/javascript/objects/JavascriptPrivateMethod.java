@@ -28,6 +28,13 @@ public class JavascriptPrivateMethod extends AbstractJavascriptObject
 	}
 
 
+	public JavascriptPrivateMethod addBodyWithIndent(String line, int indent, Object... args)
+	{
+		body.add(String.format(getIndent(indent) + line, args));
+		return this;
+	}
+
+
 	public JavascriptPrivateMethod addLine()
 	{
 		body.add("");
