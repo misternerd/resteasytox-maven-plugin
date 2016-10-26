@@ -437,7 +437,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		try(BufferedWriter writer = Files.newBufferedWriter(mainFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW))
 		{
 			writer.write("// if running on nodejs, include polyfill\n");
-			writer.write("if(global && !('fetch' in global))\n{\n");
+			writer.write("if(typeof global != 'undefined' && !('fetch' in global))\n{\n");
 			writer.write("\tglobal.fetch = require('node-fetch');\n");
 			writer.write("}\n\n");
 			writer.write("var window = window || global;\n\n");
