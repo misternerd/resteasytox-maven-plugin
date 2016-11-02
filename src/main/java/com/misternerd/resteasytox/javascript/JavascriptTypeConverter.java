@@ -39,7 +39,7 @@ public class JavascriptTypeConverter
 		typeMap.put("double", JavascriptBasicType.NUMBER);
 		typeMap.put("string", JavascriptBasicType.STRING);
 		typeMap.put("void", JavascriptBasicType.VOID);
-		typeMap.put("date", new JavascriptType("Date"));
+		typeMap.put("date", JavascriptBasicType.NUMBER);
 	}
 
 
