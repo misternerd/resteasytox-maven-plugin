@@ -42,6 +42,8 @@ public class RestServiceLayout
 
 	public final MavenProject mavenProject;
 
+	public final Metadata metadata;
+
 	private final String javaPackageName;
 
 	private final JaxWsAnnotations jaxWsAnnotations;
@@ -61,10 +63,13 @@ public class RestServiceLayout
 	public final Map<Class<?>, AbstractDto> abstractDtos = new HashMap<>();
 
 
-	public RestServiceLayout(Log log, MavenProject mavenProject, String javaPackageName, JaxWsAnnotations annotations, List<Class<?>> serviceClassList)
+
+	public RestServiceLayout(Log log, MavenProject mavenProject, Metadata metadata, String javaPackageName,
+		JaxWsAnnotations annotations, List<Class<?>> serviceClassList)
 	{
 		this.logger = log;
 		this.mavenProject = mavenProject;
+		this.metadata = metadata;
 		this.javaPackageName = javaPackageName;
 		this.jaxWsAnnotations = annotations;
 		this.serviceClassList = serviceClassList;

@@ -113,7 +113,7 @@ public class RestClient extends JavascriptClass
 				.addBodyWithIndent("}", 1)
 			.addBody("}")
 			.addBody("return new Promise(function(onFulfill, onReject) {")
-				.addBodyWithIndent("window.fetch(path, fetchParams)", 1)
+				.addBodyWithIndent("fetch(path, fetchParams)", 1)
 					.addBodyWithIndent(".then(function(response) {", 2)
 						.addBodyWithIndent("if(!response.ok) {", 3)
 							.addBodyWithIndent("onReject('Received invalid HTTP status');", 4)

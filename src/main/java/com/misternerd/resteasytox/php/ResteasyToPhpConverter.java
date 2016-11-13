@@ -87,7 +87,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 		Files.createDirectories(sourcePath);
 
-		new MetaDataGenerator(outputPath, baseNamespace).createFiles();
+		new MetaDataGenerator(outputPath, baseNamespace, layout.metadata).createFiles();
 	}
 
 

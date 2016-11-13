@@ -39,6 +39,12 @@ public class ResttoxMojo extends AbstractMojo
 	@Parameter(property = "printLayout", defaultValue = "false", required = false)
 	private boolean printLayout;
 
+	@Parameter(property = "projectName", defaultValue = "resteasytoxclient")
+	private String projectName;
+
+	@Parameter(property = "metadata")
+	private Metadata metadata;
+
 	@Parameter(property = "serviceClassnames", required = true)
 	private List<String> serviceClassnames;
 
@@ -103,7 +109,7 @@ public class ResttoxMojo extends AbstractMojo
 			JaxWsAnnotations annotations = new JaxWsAnnotations(classLoader);
 			List<Class<?>> serviceClasses = loadServicesClasses(classLoader);
 
-			RestServiceLayout serviceLayout = new RestServiceLayout(logger, project, javaPackageName, annotations, serviceClasses);
+			RestServiceLayout serviceLayout = new RestServiceLayout(logger, project, metadata, javaPackageName, annotations, serviceClasses);
 			loadAdditionalDtoClasses(classLoader, serviceLayout);
 			serviceLayout.readLayoutFromReflection(printLayout);
 

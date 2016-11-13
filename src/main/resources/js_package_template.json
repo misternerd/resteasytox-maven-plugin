@@ -1,14 +1,18 @@
 {
-	"name": "resteasytoxclient",
+	"name": "##NAME##",
 	"version": "##VERSION##",
-	"description": "Auto-generated REST client for a JAX-RS project",
+	"description": "##DESCRIPTION##",
 	"main": "dist/RestClient.js",
-	"keywords": [
-		"restclient",
-		"JAX-RS"
-	],
-	"author": "ResteasyToX Code Generator",
+	"author": "##AUTHOR##",
 	"license": "Apache License, Version 2.0",
-	"homepage": "https://github.com/misternerd/resteasytox-maven-plugin",
-	"typings": "dist/RestClient.d.ts"
+	"homepage": "##HOMEPAGE##",
+	"bugs": {
+		"url": "##SCMURL##",
+		"email": "##EMAIL##"
+	},
+	"typings": "dist/RestClient.d.ts",
+	"dependencies": {
+		"es6-promise": "^4.0.5",
+		"isomorphic-fetch": "^2.2.1"
+	}
 }

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.misternerd.resteasytox.Metadata;
 import org.apache.commons.io.IOUtils;
 
 import com.misternerd.resteasytox.php.baseObjects.PhpNamespace;
@@ -17,11 +18,14 @@ public class MetaDataGenerator
 
 	protected final PhpNamespace namespace;
 
+	private final Metadata metadata;
 
-	public MetaDataGenerator(Path outputPath, PhpNamespace namespace)
+
+	public MetaDataGenerator(Path outputPath, PhpNamespace namespace, Metadata metadata)
 	{
 		this.outputPath = outputPath;
 		this.namespace = namespace;
+		this.metadata = metadata;
 	}
 
 
@@ -37,6 +41,12 @@ public class MetaDataGenerator
 		InputStream stream = getClass().getClassLoader().getResourceAsStream("php_composer_template.json");
 		String content = IOUtils.toString(stream);
 		content = content.replace("##NAMESPACE##", namespace.toAbsoluteNamespace(false));
+		content = content.replace("##NAME##", metadata.getName());
+		content = content.replace("##DESCRIPTION##", metadata.getDescription());
+		content = content.replace("##AUTHOR##", metadata.getAuthor());
+		content = content.replace("##HOMEPAGE##", metadata.getHomepage());
+		content = content.replace("##SCMURL##", metadata.getScmUrl());
+		content = content.replace("##EMAIL##", metadata.getEmail());
 		Files.write(new File(outputPath.toFile(), "composer.json").toPath(), content.toString().getBytes("UTF-8"));
 	}
 

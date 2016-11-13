@@ -426,7 +426,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 	private void generateMetadataFiles() throws IOException
 	{
-		new MetaDataGenerator(outputPath, layout.mavenProject).createFiles();
+		new MetaDataGenerator(outputPath, layout.mavenProject, layout.metadata).createFiles();
 	}
 
 
@@ -436,12 +436,8 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 		try(BufferedWriter writer = Files.newBufferedWriter(mainFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW))
 		{
-			writer.write("// if running on nodejs, include polyfill\n");
-			writer.write("if(typeof global != 'undefined' && !('fetch' in global))\n{\n");
-			writer.write("\tglobal.fetch = require('node-fetch');\n");
-			writer.write("}\n\n");
-			writer.write("var window = window || global;\n\n");
-
+			writer.write("// include polyfills\n");
+			writer.write("require('es6-promise').polyfill();\nrequire('isomorphic-fetch');\n\n");
 			writer.write(String.format("var %s = {};\n\n", namespace));
 
 			for(Path file : generatedJavascriptFiles)
