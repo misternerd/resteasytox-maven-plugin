@@ -437,7 +437,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		try(BufferedWriter writer = Files.newBufferedWriter(mainFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW))
 		{
 			writer.write("// include polyfills\n");
-			writer.write("require('es6-promise').polyfill();\nrequire('isomorphic-fetch');\n\n");
+			writer.write("if(typeof require !== 'undefined')\n{\n\trequire('es6-promise').polyfill();\n\trequire('isomorphic-fetch');\n}\n");
 			writer.write(String.format("var %s = {};\n\n", namespace));
 
 			for(Path file : generatedJavascriptFiles)
