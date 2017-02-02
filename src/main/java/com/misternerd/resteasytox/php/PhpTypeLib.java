@@ -52,7 +52,15 @@ public class PhpTypeLib
 			if (List.class.isAssignableFrom(cls))
 			{
 				PhpType phpType = getPhpType((Class<?>) types[0], nullable);
-				return new PhpType(phpType.namespace, phpType.name, "[]", true, false, nullable);
+
+				if(phpType instanceof PhpBasicType)
+				{
+					return ((PhpBasicType) phpType).asArray();
+				}
+				else
+				{
+					return new PhpType(phpType.namespace, phpType.name, "[]", true, false, nullable);
+				}
 			}
 
 			if (Map.class.isAssignableFrom(cls))

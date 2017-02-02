@@ -21,4 +21,16 @@ public class PhpBasicType extends PhpType
 		super(null, name, null, addToVarComment, addAsTypeHint, nullable);
 	}
 
+
+	private PhpBasicType(String name, String suffix, boolean addToTypeComment, boolean addAsTypeHint, boolean nullable)
+	{
+		super(null, name, suffix, addToTypeComment, addAsTypeHint, nullable);
+	}
+
+
+	public PhpBasicType asArray()
+	{
+		return new PhpBasicType(name, "[]", addToTypeComment, addAsTypeHint, nullable);
+	}
+
 }

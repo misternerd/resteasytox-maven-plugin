@@ -136,7 +136,6 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 
 	private void generateRequestObjects() throws Exception
 	{
-
 		for (Class<?> cls : layout.getRequestClasses())
 		{
 			PhpClass phpClass = new PhpClass(sourcePath, getNamespaceForClass(cls), cls.getSimpleName(),
@@ -213,7 +212,6 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 					.addBody("return $instance;");
 
 				phpClass.addMethod(PhpVisibility.PUBLIC, false, "getEnumValue", null, "return $this->enumValue;");
-
 
 				phpClass.addMethod(PhpVisibility.PUBLIC, false, "toJson", null, "return json_encode($this->value);");
 			}
@@ -339,7 +337,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 		for (ServiceClass serviceClass : layout.getServiceClasses())
 		{
 			PhpClass phpClass = new PhpClass(sourcePath, namespace, serviceClass.name, new PhpType(baseNamespace, "RestClient", null, true, true, false));
-			writeServiceClassHeader(phpClass, serviceClass.name, serviceClass.path);
+			writeServiceClassHeader(phpClass, serviceClass.path);
 
 			for(ServiceMethod method : serviceClass.methods)
 			{
@@ -352,7 +350,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 	}
 
 
-	private void writeServiceClassHeader(PhpClass phpClass, String className, String servicePath)
+	private void writeServiceClassHeader(PhpClass phpClass, String servicePath)
 	{
 		PhpType loggerType = new PhpType(new PhpNamespace("Psr\\Log"), "LoggerInterface", null, true, true, false);
 		phpClass.addTypeImport(loggerType);
@@ -391,11 +389,7 @@ public class ResteasyToPhpConverter extends AbstractResteasyConverter
 		phpMethod.addBody("$path = self::PATH . \"" + method.path + "\";");
 		writeRestCallToBody(method, phpMethod, pathParams, headerParams);
 		phpMethod.addBody("return $this->mapJsonToObject($response->body, new " + returnType + "());");
-
-		if(method.returnType != null)
-		{
-			phpMethod.setReturnType(typeLib.getPhpType(method.returnType, false));
-		}
+		phpMethod.setReturnType(typeLib.getPhpType(method.returnType, false));
 	}
 
 
