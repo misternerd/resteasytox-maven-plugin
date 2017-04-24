@@ -10,6 +10,7 @@ import com.misternerd.resteasytox.RestServiceLayout;
 import com.misternerd.resteasytox.base.AbstractDto;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 
 public class InitFromJsonMethod extends JavascriptPublicMethod
@@ -127,7 +128,10 @@ public class InitFromJsonMethod extends JavascriptPublicMethod
 
 		if (Map.class.isAssignableFrom(cls) && types.length == 2)
 		{
-			createMapAssignment(namespace, memberName, (Class<?>) types[0], (Class<?>) types[1]);
+			Class<?> keyType = (types[0] instanceof ParameterizedTypeImpl) ? (((ParameterizedTypeImpl) types[0]).getRawType()) : ((Class<?>) types[0]);
+			Class<?> valueType = (types[1] instanceof ParameterizedTypeImpl) ? (((ParameterizedTypeImpl) types[1]).getRawType()) : ((Class<?>) types[1]);
+
+			createMapAssignment(namespace, memberName, keyType, valueType);
 			return true;
 		}
 
