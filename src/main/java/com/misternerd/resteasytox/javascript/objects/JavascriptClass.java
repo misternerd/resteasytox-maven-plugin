@@ -277,7 +277,8 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 
 		addTypescriptPublicConstants(sb);
 		addTypescriptMembers(sb);
-		addTypescriptConstructor(sb);
+		addTypescriptEmptyConstructor(sb);
+		addTypescriptFullConstructor(sb);
 		addTypescriptMethods(sb);
 
 		sb.append("\n\t}");
@@ -314,14 +315,20 @@ http://stackoverflow.com/questions/1114024/constructors-in-javascript-objects
 	}
 
 
-	private void addTypescriptConstructor(StringBuilder sb)
+	private void addTypescriptEmptyConstructor(StringBuilder sb)
+	{
+		sb.append("\n\t\tconstructor();");
+	}
+
+
+	private void addTypescriptFullConstructor(StringBuilder sb)
 	{
 		sb.append("\n\t\tconstructor(");
 
 		for(Iterator<JavascriptParameter> it = constructorParams.iterator(); it.hasNext(); )
 		{
 			JavascriptParameter param = it.next();
-			sb.append(param.name).append(" : ").append(param.type.name);
+			sb.append(param.name).append("? : ").append(param.type.name);
 
 			if(it.hasNext())
 			{
