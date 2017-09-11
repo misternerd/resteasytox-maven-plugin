@@ -31,6 +31,8 @@ public class JaxWsAnnotations
 	
 	public final Class<? extends Annotation> xmlElement;
 
+	public final Class<? extends Annotation> queryParam;
+
 
 	@SuppressWarnings("unchecked")
 	public JaxWsAnnotations(ClassLoader classLoader) throws ClassNotFoundException
@@ -48,6 +50,7 @@ public class JaxWsAnnotations
 		this.jsonSubTypes = (Class<? extends Annotation>) classLoader.loadClass("com.fasterxml.jackson.annotation.JsonSubTypes");
 		this.jsonTypeInfo = (Class<? extends Annotation>) classLoader.loadClass("com.fasterxml.jackson.annotation.JsonTypeInfo");
 		this.xmlElement = (Class<? extends Annotation>) classLoader.loadClass("javax.xml.bind.annotation.XmlElement");
+		this.queryParam = (Class<? extends Annotation>) classLoader.loadClass("javax.ws.rs.QueryParam");
 	}
 
 }

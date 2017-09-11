@@ -213,6 +213,11 @@ public class RestServiceLayout
 					logger.debug("Context parameter will be discarded for method=" + method.getName());
 					continue parameterLoop;
 				}
+				else if(jaxWsAnnotations.queryParam.equals(annotation.annotationType()))
+				{
+					logger.debug("Query parameter will be discarded for method=" + method.getName());
+					continue parameterLoop;
+				}
 			}
 
 			String paramName = StringUtils.uncapitalize(parameterTypes[i].getSimpleName());
