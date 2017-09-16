@@ -35,6 +35,7 @@ public class RestClient extends JavascriptClass
 		}
 
 		addReplacePathParamsMethod();
+		addReplaceQueryParamsMethod();
 		addDecodeDataToObjectMethod();
 		addDefaultRequestMethod();
 		addGettersForServiceClasses(layout);
@@ -57,6 +58,17 @@ public class RestClient extends JavascriptClass
 			.addBody("return restBaseUrl + path;");
 	}
 
+	private void addReplaceQueryParamsMethod()
+	{
+		addPrivateMethod("replaceQueryParamsInPath", JavascriptBasicType.STRING)
+				.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+				.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "queryParams"))
+				.addBody("for(var paramName in queryParams)")
+				.addBody("{")
+				.addBody("\tpath = path.replace('{' + paramName + '}', queryParams[paramName]);")
+				.addBody("}")
+				.addBody("return restBaseUrl + path;");
+	}
 
 	private void addDecodeDataToObjectMethod()
 	{
@@ -86,11 +98,13 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "queryParams"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.OBJECT, "body"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("path = replacePathParamsInPath(path, pathParams);")
+			.addBody("path = replaceQueryParamsInPath(path, queryParams);")
 			.addBody("var headers = {};\n")
 			.addBody("headers['Content-Type'] = contentType;")
 			.addBody("if(headerParams != null) {")
@@ -127,7 +141,11 @@ public class RestClient extends JavascriptClass
 						.addBodyWithIndent("if(receivedContentType == 'application/json') {", 3)
 							.addBodyWithIndent("response.json().then(function(jsonData) {", 4)
 								.addBodyWithIndent("if(resultObject != null) {", 5)
-									.addBodyWithIndent("onFulfill(resultObject.initFromJson(jsonData));", 6)
+									.addBodyWithIndent("if(resultObject.hasOwnProperty('initFromJson')) {", 6)
+										.addBodyWithIndent("onFulfill(resultObject.initFromJson(jsonData));", 7)
+									.addBodyWithIndent("} else {", 6)
+										.addBodyWithIndent("onFulfill(jsonData);", 7)
+									.addBodyWithIndent("}", 6)
 								.addBodyWithIndent("}", 5)
 								.addBodyWithIndent("else {", 5)
 									.addBodyWithIndent("onFulfill(response.json());", 6)
@@ -168,10 +186,11 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "headerParams"))
 			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "pathParams"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "queryParams"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING,"resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("return fetchRequest('GET', path, headerParams, pathParams, null, contentType, resultType, resultObject);");
+			.addBody("return fetchRequest('GET', path, headerParams, pathParams, queryParams, null, contentType, resultType, resultObject);");
 	}
 
 
@@ -185,7 +204,7 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("return fetchRequest('POST', path, headerParams, pathParams, body, contentType, resultType, resultObject);");
+			.addBody("return fetchRequest('POST', path, headerParams, pathParams, null, body, contentType, resultType, resultObject);");
 	}
 
 
@@ -199,7 +218,7 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("return fetchRequest('PUT', path, headerParams, pathParams, body, contentType, resultType, resultObject);");
+			.addBody("return fetchRequest('PUT', path, headerParams, pathParams, null, body, contentType, resultType, resultObject);");
 	}
 
 
@@ -212,7 +231,7 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "contentType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
-			.addBody("return fetchRequest('DELETE', path, headerParams, pathParams, null, contentType, resultType, resultObject);");
+			.addBody("return fetchRequest('DELETE', path, headerParams, pathParams, null, null, contentType, resultType, resultObject);");
 	}
 
 

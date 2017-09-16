@@ -147,13 +147,14 @@ public class RestServiceLayout
 				SortedSet<MethodParameter> headerParams = new TreeSet<>(new MethodParameterComparator());
 				SortedSet<MethodParameter> pathParams = new TreeSet<>(new MethodParameterComparator());
 				SortedSet<MethodParameter> bodyParams = new TreeSet<>(new MethodParameterComparator());
+				SortedSet<MethodParameter> queryParams = new TreeSet<>(new MethodParameterComparator());
 
-				readParamsFromMethod(method, headerParams, pathParams, bodyParams);
+				readParamsFromMethod(method, headerParams, pathParams, bodyParams, queryParams);
 
 				MethodParameter bodyParam = (!bodyParams.isEmpty()) ? bodyParams.iterator().next() : null;
 
 				methods.add(new ServiceMethod(method.getName(), path, requestMethod, requestContentType,
-						responseContentType, headerParams, pathParams, bodyParam, returnType));
+						responseContentType, headerParams, pathParams, bodyParam, queryParams, returnType));
 			}
 
 			Collections.sort(methods, new ServiceMethodComparator());
@@ -185,7 +186,7 @@ public class RestServiceLayout
 	}
 
 
-	private void readParamsFromMethod(Method method, Set<MethodParameter> headerParams, Set<MethodParameter> pathParams, Set<MethodParameter> bodyParams)
+	private void readParamsFromMethod(Method method, Set<MethodParameter> headerParams, Set<MethodParameter> pathParams, Set<MethodParameter> bodyParams, Set<MethodParameter> queryParams)
 			throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
 	{
 		Class<?>[] parameterTypes = method.getParameterTypes();
@@ -215,6 +216,7 @@ public class RestServiceLayout
 				}
 				else if(jaxWsAnnotations.queryParam.equals(annotation.annotationType()))
 				{
+					queryParams.add(new MethodParameter(getValueForJaxWsAnnotation(annotation), parameterTypes[i]));
 					logger.debug("Query parameter will be discarded for method=" + method.getName());
 					continue parameterLoop;
 				}
