@@ -355,10 +355,11 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			String urlStr;
 			if(!serviceMethod.queryParams.isEmpty()) {
 				urlStr = "var request = restClient.getRequest(PATH + '%s' + '?' + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);";
+				method.addBody(urlStr, serviceMethod.path, buildUrlParamsFromSet(serviceMethod.queryParams), serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
 			} else {
-				urlStr = "var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, queryParam, '%s', '%s', %s);";
+				urlStr = "var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);";
+				method.addBody(urlStr, serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
 			}
-			method.addBody(urlStr, serviceMethod.path, buildUrlParamsFromSet(serviceMethod.queryParams), serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
 			method.addBody("return request;");
 		}
 		// POST, PUT and DELETE allow a body

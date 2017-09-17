@@ -55,19 +55,19 @@ public class RestClient extends JavascriptClass
 			.addBody("{")
 				.addBody("\tpath = path.replace('{' + paramName + '}', pathParams[paramName]);")
 			.addBody("}")
-			.addBody("return restBaseUrl + path;");
+			.addBody("return (restBaseUrl + path).replace(/\\/\\//g, '/');");
 	}
 
 	private void addReplaceQueryParamsMethod()
 	{
 		addPrivateMethod("replaceQueryParamsInPath", JavascriptBasicType.STRING)
-				.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
-				.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "queryParams"))
-				.addBody("for(var paramName in queryParams)")
-				.addBody("{")
+			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "path"))
+			.addParameter(new JavascriptParameter(JavascriptArrayType.STRING_ARRAY, "queryParams"))
+			.addBody("for(var paramName in queryParams)")
+			.addBody("{")
 				.addBody("\tpath = path.replace('{' + paramName + '}', queryParams[paramName]);")
-				.addBody("}")
-				.addBody("return restBaseUrl + path;");
+			.addBody("}")
+			.addBody("return (path).replace(/\\/\\//g, '/');");
 	}
 
 	private void addDecodeDataToObjectMethod()
@@ -104,7 +104,9 @@ public class RestClient extends JavascriptClass
 			.addParameter(new JavascriptParameter(JavascriptBasicType.STRING, "resultType"))
 			.addParameter(new JavascriptParameter(JavascriptBasicType.ANY, "resultObject"))
 			.addBody("path = replacePathParamsInPath(path, pathParams);")
-			.addBody("path = replaceQueryParamsInPath(path, queryParams);")
+			.addBody("if (queryParams != null) { ")
+				.addBody("path = replaceQueryParamsInPath(path, queryParams);", 1)
+			.addBody("} ")
 			.addBody("var headers = {};\n")
 			.addBody("headers['Content-Type'] = contentType;")
 			.addBody("if(headerParams != null) {")
