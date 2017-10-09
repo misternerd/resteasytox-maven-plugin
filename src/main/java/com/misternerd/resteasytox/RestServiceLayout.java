@@ -217,7 +217,6 @@ public class RestServiceLayout
 				else if(jaxWsAnnotations.queryParam.equals(annotation.annotationType()))
 				{
 					queryParams.add(new MethodParameter(getValueForJaxWsAnnotation(annotation), parameterTypes[i]));
-					logger.debug("Query parameter will be discarded for method=" + method.getName());
 					continue parameterLoop;
 				}
 			}

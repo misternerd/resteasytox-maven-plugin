@@ -352,21 +352,25 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		// GET requires no body
 		if(GET == serviceMethod.httpMethod)
 		{
-			String urlStr;
 			if(!serviceMethod.queryParams.isEmpty()) {
-				urlStr = "var request = restClient.getRequest(PATH + '%s' + '?' + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);";
-				method.addBody(urlStr, serviceMethod.path, buildUrlParamsFromSet(serviceMethod.queryParams), serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+				method.addBody("var request = restClient.getRequest(PATH + '%s' + '?' + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);",
+						serviceMethod.path, buildUrlParamsFromSet(serviceMethod.queryParams), serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
 			} else {
-				urlStr = "var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);";
-				method.addBody(urlStr, serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+				method.addBody("var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);",
+						serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
 			}
 			method.addBody("return request;");
 		}
 		// POST, PUT and DELETE allow a body
 		else
 		{
-			method.addBody("var request = restClient.%sRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
-				httpMethodName, serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			if(!serviceMethod.queryParams.isEmpty()) {
+				method.addBody("var request = restClient.%sRequest(PATH + '%s' + '?' + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);",
+						httpMethodName, serviceMethod.path, buildUrlParamsFromSet(serviceMethod.queryParams), serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			} else {
+				method.addBody("var request = restClient.%sRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
+						httpMethodName, serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			}
 			method.addBody("return request;");
 		}
 	}
