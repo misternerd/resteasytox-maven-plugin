@@ -13,6 +13,7 @@ import com.misternerd.resteasytox.javascript.objects.*;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptBasicType;
 import com.misternerd.resteasytox.javascript.objects.types.JavascriptType;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -271,6 +272,20 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 			method.addBody("var pathParams = null;");
 		}
 
+		if(!serviceMethod.queryParams.isEmpty())
+		{
+			method.addBody("var queryParams = {};");
+
+			for(MethodParameter param : serviceMethod.queryParams)
+			{
+				method.addBody("queryParams['%s'] = %s;", param.name, convertParamNameToCorrectFormat(param));
+			}
+		}
+		else
+		{
+			method.addBody("var queryParams = null;");
+		}
+
 		for(MethodParameter param : serviceMethod.headerParams)
 		{
 			JavascriptType type = typeConverter.getJavascriptType(param.type);
@@ -278,6 +293,12 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		}
 
 		for(MethodParameter param : serviceMethod.pathParams)
+		{
+			JavascriptType type = typeConverter.getJavascriptType(param.type);
+			method.addParameter(new JavascriptParameter(type, convertParamNameToCorrectFormat(param)));
+		}
+
+		for(MethodParameter param : serviceMethod.queryParams)
 		{
 			JavascriptType type = typeConverter.getJavascriptType(param.type);
 			method.addParameter(new JavascriptParameter(type, convertParamNameToCorrectFormat(param)));
@@ -331,17 +352,42 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 		// GET requires no body
 		if(GET == serviceMethod.httpMethod)
 		{
-			method.addBody("var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, '%s', '%s', %s);",
-				serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			if(!serviceMethod.queryParams.isEmpty()) {
+				method.addBody("var request = restClient.getRequest(PATH + '%s' + '?' + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);",
+						serviceMethod.path, buildUrlParamsFromSet(serviceMethod.queryParams), serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			} else {
+				method.addBody("var request = restClient.getRequest(PATH + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);",
+						serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			}
 			method.addBody("return request;");
 		}
 		// POST, PUT and DELETE allow a body
 		else
 		{
-			method.addBody("var request = restClient.%sRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
-				httpMethodName, serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			if(!serviceMethod.queryParams.isEmpty()) {
+				method.addBody("var request = restClient.%sRequest(PATH + '%s' + '?' + '%s', headerParams, pathParams, queryParams, '%s', '%s', %s);",
+						httpMethodName, serviceMethod.path, buildUrlParamsFromSet(serviceMethod.queryParams), serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			} else {
+				method.addBody("var request = restClient.%sRequest(PATH + '%s', headerParams, pathParams, bodyData, '%s', '%s', %s);",
+						httpMethodName, serviceMethod.path, serviceMethod.requestContentType, serviceMethod.responseContentType, returnType);
+			}
 			method.addBody("return request;");
 		}
+	}
+
+	private String buildUrlParamsFromSet(Set<MethodParameter> parameterSet) {
+		StringBuffer resultBuffer = new StringBuffer();
+		for(MethodParameter param : parameterSet) {
+			if(resultBuffer.length() != 0) {
+				resultBuffer.append('&');
+			}
+			resultBuffer.append(param.name);
+			resultBuffer.append('=');
+			resultBuffer.append('{');
+			resultBuffer.append(param.name);
+			resultBuffer.append('}');
+		}
+		return resultBuffer.toString();
 	}
 
 

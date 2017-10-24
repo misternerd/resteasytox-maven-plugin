@@ -26,6 +26,8 @@ public class ServiceMethod
 
 	public final SortedSet<MethodParameter> pathParams;
 
+	public final SortedSet<MethodParameter> queryParams;
+
 	public final MethodParameter bodyParam;
 
 	public final Class<? extends Object> returnType;
@@ -33,7 +35,7 @@ public class ServiceMethod
 
 	public ServiceMethod(String name, String path, RequestMethod httpMethod, String requestContentType,
 			String responseContentType, SortedSet<MethodParameter> headerParams, SortedSet<MethodParameter> pathParams,
-			MethodParameter bodyParam, Class<? extends Object> returnType)
+			MethodParameter bodyParam, SortedSet<MethodParameter> queryParams, Class<? extends Object> returnType)
 	{
 		this.name = name;
 		this.path = path;
@@ -44,6 +46,7 @@ public class ServiceMethod
 		this.pathParams = pathParams;
 		this.bodyParam = bodyParam;
 		this.returnType = returnType;
+		this.queryParams = queryParams;
 	}
 
 
