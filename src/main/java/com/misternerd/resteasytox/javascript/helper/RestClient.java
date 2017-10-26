@@ -55,7 +55,7 @@ public class RestClient extends JavascriptClass
 			.addBody("{")
 				.addBody("\tpath = path.replace('{' + paramName + '}', pathParams[paramName]);")
 			.addBody("}")
-			.addBody("return (restBaseUrl + path).replace(/\\/\\//g, '/');");
+			.addBody("return restBaseUrl + (path).replace(/\\/\\//g, '/');");
 	}
 
 	private void addReplaceQueryParamsMethod()
