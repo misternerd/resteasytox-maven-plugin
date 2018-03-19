@@ -47,7 +47,7 @@ public class RestClientHelperObject extends AbstractHelperObject
 			.addBody("self::$baseUrl = $baseUrl;")
 			.addBody("self::$logger = $logger;")
 			.addBody("self::$mapper = new \\JsonMapper();")
-			.addBody("self::$mapper->bExceptionOnUndefinedProperty = true;");
+			.addBody("self::$mapper->bExceptionOnUndefinedProperty = false;");
 	}
 
 
