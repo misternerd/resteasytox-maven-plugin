@@ -104,7 +104,7 @@ public class RestServiceLayout
 	{
 		return serviceClasses;
 	}
-	
+
 
 	public JaxWsAnnotations getAnnotations()
 	{
@@ -217,6 +217,10 @@ public class RestServiceLayout
 				else if(jaxWsAnnotations.queryParam.equals(annotation.annotationType()))
 				{
 					queryParams.add(new MethodParameter(getValueForJaxWsAnnotation(annotation), parameterTypes[i]));
+					continue parameterLoop;
+				}
+				else
+				{
 					continue parameterLoop;
 				}
 			}
