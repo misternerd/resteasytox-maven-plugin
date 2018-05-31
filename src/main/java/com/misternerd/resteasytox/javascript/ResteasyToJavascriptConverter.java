@@ -206,8 +206,7 @@ public class ResteasyToJavascriptConverter extends AbstractResteasyConverter
 
 				if(implementingClass.equals(cls))
 				{
-					JavascriptType type = typeConverter.getJavascriptType(implementingClass);
-					jsClass.addPublicMember(new JavascriptPublicMember(type, abstractDto.typeInfoField, implementingClassName, true, true));
+					jsClass.addPublicMember(new JavascriptPublicMember(JavascriptBasicType.STRING, abstractDto.typeInfoField, implementingClassName, true, true));
 				}
 			}
 		}
