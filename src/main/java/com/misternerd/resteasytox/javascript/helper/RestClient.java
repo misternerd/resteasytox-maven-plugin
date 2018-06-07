@@ -166,7 +166,12 @@ public class RestClient extends JavascriptClass
 						.addBodyWithIndent("}", 3)
 					.addBodyWithIndent("})", 2)
 				.addBodyWithIndent(".catch(function(error) {", 1)
-					.addBodyWithIndent("onReject('Request yielded error=' + error);", 2)
+					.addBodyWithIndent("if (error instanceof TypeError) {", 2)
+						.addBodyWithIndent("onFulfill({code: 503, message: error.message, stack: error.stack});", 3)
+					.addBodyWithIndent("}", 2)
+					.addBodyWithIndent("else {", 2)
+						.addBodyWithIndent("onReject('Request yielded error=' + error);", 3)
+					.addBodyWithIndent("}", 2)
 				.addBodyWithIndent("});", 1)
 			.addBody("});");
 	}
