@@ -117,7 +117,9 @@ public class InitFromJsonMethod extends JavascriptPublicMethod
 
 		if (List.class.isAssignableFrom(cls) && types.length == 1)
 		{
-			Class<?> concreteClass = (Class<?>) types[0];
+			Class<?> concreteClass = (types[0] instanceof Class)
+				? (Class<?>) types[0]
+				: null;
 
 			if(layout.getDtoClasses().contains(concreteClass))
 			{

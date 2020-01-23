@@ -54,8 +54,14 @@ public class JavascriptTypeConverter
 
 			if (List.class.isAssignableFrom(cls) || Set.class.isAssignableFrom(cls))
 			{
-				JavascriptType basis = getJavascriptType((Class<?>) types[0]);
-				return new JavascriptArrayType(basis);
+				if(types[0] instanceof Class)
+				{
+					return new JavascriptArrayType(getJavascriptType((Class<?>) types[0]));
+				}
+				else
+				{
+					return new JavascriptArrayType(JavascriptBasicType.ANY);
+				}
 			}
 
 			if (Map.class.isAssignableFrom(cls))
